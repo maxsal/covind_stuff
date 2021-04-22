@@ -249,7 +249,7 @@ plot_india_barplot <- function(start_date = "2020-03-01", max_date, save = TRUE)
     ) %>%
     ggplot(aes(x = date_ymd, y = count, group = factor(Trend, levels = c("Recovered", "Fatalities", "New cases")), fill = factor(Trend, levels = c("Recovered", "Fatalities", "New cases")))) +
     geom_bar(stat = "identity") +
-    scale_fill_manual(values = colors) +
+    scale_fill_manual(values = daily_barplot_colors) +
     scale_y_continuous(labels = scales::comma) +
     guides(fill = guide_legend(title = "", override.aes = list(size = 1))) +
     labs(
@@ -263,7 +263,8 @@ plot_india_barplot <- function(start_date = "2020-03-01", max_date, save = TRUE)
     theme(legend.position = "top",
           legend.title = element_text(size = 10),
           legend.text = element_text(size = 8),
-          legend.key.size = unit(0.3, "cm"))
+          legend.key.size = unit(0.3, "cm"),
+          plot.margin = margin(10, 20, 10, 10))
   
   if (save == TRUE) {
   

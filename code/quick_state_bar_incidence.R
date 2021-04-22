@@ -1,7 +1,7 @@
 source("libraries.R")
 source("functions.R")
 
-max_date <- "2021-03-22"
+max_date <- "2021-04-11"
 
 # get data ------------
 state_data <- get_india_state_data(max_date = max_date)
@@ -16,3 +16,6 @@ state_data %>%
 
 # plot india barplot ----------
 plot_india_barplot(max_date = max_date)
+
+# for manuscript -------------
+plot_india_barplot(start_date = "2020-03-15", max_date = "2021-03-15", save = TRUE)

@@ -1,0 +1,202 @@
+---
+title: "Vaccines in India"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(janitor)
+library(scales)
+library(ggtext)
+library(glue)
+library(data.table)
+```
+
+## Intro
+
+As there is a resurgence of the COVID-19 pandemic in India, it is of interest to public health practitioners and policymakers to evaluate compliance towards receiving the second dose of the COVID-19 vaccine. In particular, while some protection against severe COVID-19 symptoms is conferred with the first of a two-dose vaccine, there are more protective one-dose vaccines available, which need to be considered if there is sufficient evidence that Indians are not receiving their second dose of a two-dose vaccine. In India, they are currently **only** administering two-dose COVID-19 vaccines to date (`r format(Sys.Date(), format = '%e %B %Y')`). The current recommendation is to administer the second dose six weeks after the initial dose, though it had previously been as few as four weeks and can be administered as many as eight weeks later.
+
+Using vaccine data from [covid19india.org](https://www.covid19india.org/) (which itself draws on the co-WIN database), we explore the distribution of the administration of first and second doses of COVID-19 vaccines in India over time and describe the discrepancy in expected two-dose vaccinations.
+
+```{r data, echo = FALSE}
+d <- read_csv("http://api.covid19india.org/csv/latest/cowin_vaccine_data_statewise.csv",
+              col_types = cols()) %>%
+  clean_names() %>%
+  select(-c(total_sessions_conducted, total_sites, male_individuals_vaccinated,
+            female_individuals_vaccinated, transgender_individuals_vaccinated,
+            total_covaxin_administered, total_covi_shield_administered,
+            total_individuals_registered)) %>%
+  mutate(
+    updated_on = as.Date(updated_on, format = "%d/%m/%Y"),
+    one_dose   = total_individuals_vaccinated - second_dose_administered) %>%
+  rename(date = updated_on, two_dose = second_dose_administered,
+         total_vax = total_individuals_vaccinated,
+         total_doses = total_doses_administered) %>%
+  filter(state == "India") %>%
+  arrange(date) %>%
+  mutate(
+    daily_one_dose = one_dose - dplyr::lag(one_dose),
+    daily_two_dose = two_dose - dplyr::lag(two_dose),
+    four_week      = replace_na(dplyr::lag(daily_one_dose, 7*4), 0),
+    six_week       = replace_na(dplyr::lag(daily_one_dose, 7*6), 0),
+    eight_week     = replace_na(dplyr::lag(daily_one_dose, 7*8), 0),
+    daily_min_week       = NA,
+    daily_max_week       = NA
+  )
+
+for (i in 1:nrow(d)) {
+  d$daily_min_week[i] <- ifelse(min(d$four_week[i], d$six_week[i], d$eight_week[i], na.rm = T) < 0, 0, min(d$four_week[i], d$six_week[i], d$eight_week[i], na.rm = T))
+  d$daily_max_week[i] <- ifelse(max(d$four_week[i], d$six_week[i], d$eight_week[i], na.rm = T) < 0, 0, max(d$four_week[i], d$six_week[i], d$eight_week[i], na.rm = T))
+}
+d <- d %>%
+  mutate(
+    min_week = cumsum(daily_min_week),
+    max_week = cumsum(daily_max_week)
+  )
+
+d
+```
+
+## Plots
+
+```{r dose_plt, echo=FALSE, fig.align='center'}
+d %>%
+  drop_na() %>%
+  ggplot(aes(x = date, y = total_doses)) +
+  geom_line(size = 1) +
+  scale_y_continuous(labels = comma) +
+  labs(
+    title    = "Cumulative doses administered",
+    subtitle = glue("as of {format(max(d$date), '%e %B %Y')}"),
+    x        = "Date",
+    y        = "Cumulative doses administered",
+    caption  = "**Source:** covid19india.org<br>**\uA9 COV-IND-19 Study Group**"
+  ) +
+  theme_minimal() +
+  theme(
+    text          = element_text(family = "Avenir"),
+    plot.title    = element_text(face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5, color = "gray40"),
+    plot.caption  = element_markdown(hjust = 0),
+    panel.grid    = element_blank(),
+    axis.line     = element_line(size = 0.25, color = "black")
+  )
+```
+
+
+```{r two_dose_plt, echo=FALSE, fig.align='center'}
+d %>%
+  drop_na() %>%
+  select(date, one_dose, two_dose) %>%
+  pivot_longer(names_to = "dose", values_to = "value", -date) %>%
+  ggplot(aes(x = date, y = value, group = dose, color = dose)) +
+  geom_line(size = 1) +
+  scale_y_continuous(labels = comma) +
+  labs(
+    title    = "Cumulative individuals vaccinated by dose",
+    subtitle = glue("as of {format(max(d$date), '%e %B %Y')}"),
+    x        = "Date",
+    y        = "Cumulative individuals vaccinated",
+    caption  = "**Source:** covid19india.org<br>**\uA9 COV-IND-19 Study Group**"
+  ) +
+  scale_color_manual(values = c("#011387", "#870101")) +
+  theme_minimal() +
+  theme(
+    text            = element_text(family = "Avenir"),
+    plot.title      = element_text(face = "bold", hjust = 0.5),
+    plot.subtitle   = element_text(hjust = 0.5, color = "gray40"),
+    plot.caption    = element_markdown(hjust = 0),
+    panel.grid      = element_blank(),
+    axis.line       = element_line(size = 0.25, color = "black"),
+    legend.position = "top",
+    legend.title    = element_blank()
+  )
+```
+
+
+
+```{r two_dose_daily_plt, echo=FALSE, fig.align='center'}
+d %>%
+  drop_na() %>%
+  select(date, daily_one_dose, daily_two_dose) %>%
+  pivot_longer(names_to = "dose", values_to = "value", -date) %>%
+  ggplot(aes(x = date, y = value, group = dose, color = dose)) +
+  geom_line(size = 1) +
+  scale_y_continuous(labels = comma) +
+  labs(
+    title    = "Daily individuals vaccinated by dose",
+    subtitle = glue("as of {format(max(d$date), '%e %B %Y')}"),
+    x        = "Date",
+    y        = "Daily individuals vaccinated",
+    caption  = "**Source:** covid19india.org<br>**\uA9 COV-IND-19 Study Group**"
+  ) +
+  scale_color_manual(values = c("#011387", "#870101")) +
+  theme_minimal() +
+  theme(
+    text            = element_text(family = "Avenir"),
+    plot.title      = element_text(face = "bold", hjust = 0.5),
+    plot.subtitle   = element_text(hjust = 0.5, color = "gray40"),
+    plot.caption    = element_markdown(hjust = 0),
+    panel.grid      = element_blank(),
+    axis.line       = element_line(size = 0.25, color = "black"),
+    legend.position = "top",
+    legend.title    = element_blank()
+  )
+```
+
+
+```{r exp_dose_daily_plt, echo=FALSE, fig.align='center'}
+d %>%
+  ggplot(aes(x = date)) +
+  geom_ribbon(aes(ymin = daily_min_week, ymax = daily_max_week), alpha = 0.5) +
+  geom_line(aes(y = daily_two_dose), size = 1, color = "#870101") +
+  scale_y_continuous(labels = comma) +
+  labs(
+    title    = "Expected daily second dose schedule",
+    subtitle = glue("as of {format(max(d$date), '%e %B %Y')}"),
+    x        = "Date",
+    y        = "Expected individuals receiving second dose",
+    caption  = "**Source:** covid19india.org<br>**\uA9 COV-IND-19 Study Group**"
+  ) +
+  theme_minimal() +
+  theme(
+    text            = element_text(family = "Avenir"),
+    plot.title      = element_text(face = "bold", hjust = 0.5),
+    plot.subtitle   = element_text(hjust = 0.5, color = "gray40"),
+    plot.caption    = element_markdown(hjust = 0),
+    panel.grid      = element_blank(),
+    axis.line       = element_line(size = 0.25, color = "black"),
+    legend.position = "top",
+    legend.title    = element_blank()
+  )
+```
+
+```{r exp_dose_plt, echo=FALSE, fig.align='center'}
+d %>%
+  ggplot(aes(x = date)) +
+  geom_ribbon(aes(ymin = min_week, ymax = max_week), alpha = 0.5) +
+  geom_line(aes(y = two_dose), size = 1, color = "#870101") +
+  scale_y_continuous(labels = comma) +
+  labs(
+    title    = "Expected cumulative second dose schedule",
+    subtitle = glue("as of {format(max(d$date), '%e %B %Y')}"),
+    x        = "Date",
+    y        = "Expected individuals receiving second dose",
+    caption  = "**Source:** covid19india.org<br>**\uA9 COV-IND-19 Study Group**"
+  ) +
+  theme_minimal() +
+  theme(
+    text            = element_text(family = "Avenir"),
+    plot.title      = element_text(face = "bold", hjust = 0.5),
+    plot.subtitle   = element_text(hjust = 0.5, color = "gray40"),
+    plot.caption    = element_markdown(hjust = 0),
+    panel.grid      = element_blank(),
+    axis.line       = element_line(size = 0.25, color = "black"),
+    legend.position = "top",
+    legend.title    = element_blank()
+  )
+```
+
+
+
