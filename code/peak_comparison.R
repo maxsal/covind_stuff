@@ -5,6 +5,7 @@ library(ggtext)
 
 wave_2_start <- as.Date("2021-02-15")
 today <- Sys.Date() - 1
+n_lag <- 30
 
 d <- read_csv("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-data/master/2021-04-20/everything.csv",
               col_types = cols()) %>%
@@ -116,9 +117,151 @@ wave_tab_stats <- function(dat, n_lag = 30) {
   
 }
 
-a <- w1a %>% wave_tab_stats()
-b <- w1b %>% wave_tab_stats()
-c <- w2  %>% wave_tab_stats()
+a <- w1a %>% wave_tab_stats(n_lag = n_lag)
+b <- w1b %>% wave_tab_stats(n_lag = n_lag)
+c <- w2  %>% wave_tab_stats(n_lag = n_lag)
+
+col_1 <- c("Maximimum # Daily New Cases",
+           "Maximum Effective R", "Maximum # Daily reported deaths",
+           "Maximum daily TPR", "Maximum # Daily tests done",
+           "Total # cases during this period", "Total # deaths during this period",
+           "Case fatality rates",
+           glue("Biggest {n_lag}-day relative increase in cases"),
+           glue("Biggest {n_lag}-day relative increase in deaths"),
+           glue("Biggest {n_lag}-day relative increase in TPR"))
+
+col_2 <- c(
+  glue("{format(a$max_daily_cases$count, big.mark = ',')} ({format(a$max_daily_cases$date, '%B %e')})"),
+  glue("{round(a$max_eff_r$r_est, 2)} ({format(a$max_eff_r$date, '%B %e')}, daily cases = {format(a$max_eff_r$daily_cases, big.mark = ',')}, total cases = {format(a$max_eff_r$total_cases, big.mark = ',')})"),
+  glue("{format(a$max_daily_deaths$count, big.mark = ',')} ({format(a$max_daily_deaths$date, '%B %e')})"),
+  glue("{round(a$max_daily_tpr$daily_tpr * 100, 1)}% ({format(a$max_daily_tpr$date, '%B %e')}: {format(a$max_daily_tpr$daily_cases, big.mark = ',')}, {format(a$max_daily_tpr$test, big.mark = ',')})"),
+  glue("{format(a$max_daily_tests$daily_tests, big.mark = ',')} ({format(a$max_daily_tests$date, '%B %e')})"),
+  glue("{format(a$quick_stats$total_cases, big.mark= ',')}"),
+  glue("{format(a$quick_stats$total_deaths, big.mark = ',')}"),
+  glue("{round(a$quick_stats$cfr * 100, 1)}%"),
+  glue("{format(round(a$rel_case_inc$change + 1, 2), nsmall = 2)}x, {format(round(a$rel_case_inc$change * 100, 2), nsmall = 2)}% ({format(a$rel_case_inc$lag_cases, big.mark = ',')} on {format(a$rel_case_inc$lag_date, '%B %e')} to {format(a$rel_case_inc$daily_cases, big.mark = ',')} on {format(a$rel_case_inc$date, '%B %e')})"),
+  glue("{format(round(a$rel_death_inc$change + 1, 2), nsmall = 2)}x, {format(round(a$rel_death_inc$change * 100, 2), nsmall = 2)}% ({format(a$rel_death_inc$lag_deaths, big.mark = ',')} on {format(a$rel_death_inc$lag_date, '%B %e')} to {format(a$rel_death_inc$daily_deaths, big.mark = ',')} on {format(a$rel_death_inc$date, '%B %e')})"),
+  glue("{format(round(a$rel_tpr_inc$change + 1, 2), nsmall = 2)}x, {format(round(a$rel_tpr_inc$change * 100, 2), nsmall = 2)}% ({round(a$rel_tpr_inc$lag_tpr*100, 2)}% on {format(a$rel_tpr_inc$lag_date, '%B %e')} to {round(a$rel_tpr_inc$daily_tpr * 100, 2)}% on {format(a$rel_tpr_inc$date, '%B %e')})")
+)
+
+get_col <- function(a) {
+  
+  c(
+    glue("{format(a$max_daily_cases$count, big.mark = ',')} ({format(a$max_daily_cases$date, '%B %e')})"),
+    glue("{round(a$max_eff_r$r_est, 2)} ({format(a$max_eff_r$date, '%B %e')}, daily = {format(a$max_eff_r$daily_cases, big.mark = ',')}, total = {format(a$max_eff_r$total_cases, big.mark = ',')})"),
+    glue("{format(a$max_daily_deaths$count, big.mark = ',')} ({format(a$max_daily_deaths$date, '%B %e')})"),
+    glue("{round(a$max_daily_tpr$daily_tpr * 100, 1)}% ({format(a$max_daily_tpr$date, '%B %e')}: {format(a$max_daily_tpr$daily_cases, big.mark = ',')}, {format(a$max_daily_tpr$test, big.mark = ',')})"),
+    glue("{format(a$max_daily_tests$daily_tests, big.mark = ',')} ({format(a$max_daily_tests$date, '%B %e')})"),
+    glue("{format(a$quick_stats$total_cases, big.mark= ',')}"),
+    glue("{format(a$quick_stats$total_deaths, big.mark = ',')}"),
+    glue("{round(a$quick_stats$cfr * 100, 1)}%"),
+    glue("{format(round(a$rel_case_inc$change + 1, 2), nsmall = 2)}x, {format(round(a$rel_case_inc$change * 100, 2), nsmall = 2)}% ({format(a$rel_case_inc$lag_cases, big.mark = ',')} on {format(a$rel_case_inc$lag_date, '%B %e')} to {format(a$rel_case_inc$daily_cases, big.mark = ',')} on {format(a$rel_case_inc$date, '%B %e')})"),
+    glue("{format(round(a$rel_death_inc$change + 1, 2), nsmall = 2)}x, {format(round(a$rel_death_inc$change * 100, 2), nsmall = 2)}% ({format(a$rel_death_inc$lag_deaths, big.mark = ',')} on {format(a$rel_death_inc$lag_date, '%B %e')} to {format(a$rel_death_inc$daily_deaths, big.mark = ',')} on {format(a$rel_death_inc$date, '%B %e')})"),
+    glue("{format(round(a$rel_tpr_inc$change + 1, 2), nsmall = 2)}x, {format(round(a$rel_tpr_inc$change * 100, 2), nsmall = 2)}% ({round(a$rel_tpr_inc$lag_tpr*100, 2)}% on {format(a$rel_tpr_inc$lag_date, '%B %e')} to {round(a$rel_tpr_inc$daily_tpr * 100, 2)}% on {format(a$rel_tpr_inc$date, '%B %e')})")
+  )
+  
+}
+
+col_2 <- get_col(a)
+col_3 <- get_col(b)
+col_4 <- get_col(c)
+
+tib <- tibble(
+  "Stats" = col_1,
+  "March 24, 2020 - February 14, 2021" = col_2,
+  "June 3, 2020 - February 14, 2021" = col_3,
+  "tmp" = col_4
+)
+
+names(tib)[names(tib) == "tmp"] <- glue("February 15, 2021 - {format(today, '%B %e, %Y')}")
+
+tib %>%
+  gt() %>%
+  # format table body text
+  tab_style(
+    style     = cell_text(size = px(10), font = "helvetica"),
+    locations = cells_body()
+  ) %>%
+  tab_style(
+    style     = cell_text(weight = "bold"),
+    locations = cells_body(vars(Stats))
+  ) %>%
+  # format column names
+  tab_style(
+    style = cell_text(
+      size      = px(10),
+      color     = "#999",
+      font      = "helvetica",
+      transform = "uppercase"
+    ),
+    locations = cells_column_labels(everything())
+  ) %>%
+  # random formatting
+  tab_options(
+    column_labels.border.top.style    = "none",
+    column_labels.border.bottom.width = 1,
+    column_labels.border.bottom.color = "#334422",
+    table_body.border.bottom.color    = "#0000001A",
+    data_row.padding                  = px(4),
+    # table.border.bottom.color = "#334422",
+    source_notes.font.size = 8,
+  ) %>%
+  # column widths
+  cols_width(
+    vars(Stats) ~ px(210),
+    vars(`March 24, 2020 - February 14, 2021`) ~ px(275),
+    vars(`June 3, 2020 - February 14, 2021`) ~ px(275),
+    # vars(R, CFR) ~ px(75),
+    everything() ~ px(300)
+  ) %>%
+  cols_align(
+    align   = "center",
+    columns = everything()
+  ) %>%
+  # title
+  tab_header(
+    title    = md("**Comparing COVID-19 Waves in India**"),
+    subtitle = glue("as of {format(today, '%B %e')}")
+  ) %>%
+  # caption
+  tab_source_note(
+    source_note = md(glue(
+      "**\uA9 COV-IND-19 Study Group**<br>**Source data:** covid19india.org; covind19.org"
+    ))
+  ) %>%
+  # add and format column spanners
+  tab_spanner(
+    label   = "Wave 1",
+    columns = vars(`March 24, 2020 - February 14, 2021`, `June 3, 2020 - February 14, 2021`)
+  ) %>%
+  tab_spanner(
+    label   = "Wave 2",
+    columns = vars(`February 15, 2021 - April 22, 2021`)
+  ) %>% 
+  cols_move_to_start(vars(Stats)) %>%
+  tab_style(
+    style = cell_text(
+      size      = px(10),
+      color     = "#999",
+      font      = "helvetica",
+      transform = "uppercase"
+    ),
+    locations = cells_column_spanners(spanners = c("Wave 1", "Wave 2"))
+  ) %>%
+  # adjust title font
+  tab_style(
+    style     = list(cell_text(font = "helvetica", size = px(16))),
+    locations = list(cells_title(groups = "title"))
+  ) %>%
+  # adjust subtitle font
+  tab_style(
+    style     = list(cell_text(font = "helvetica", size = px(13))),
+    locations = list(cells_title(groups = "subtitle"))
+  ) %>%
+  cols_align(
+    align = c("left"),
+    columns = vars(Stats)
+  )
 
 d %>%
   dplyr::filter(date >= "2020-03-24") %>%
