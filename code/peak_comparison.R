@@ -2,12 +2,13 @@ library(tidyverse)
 library(janitor)
 library(glue)
 library(ggtext)
+library(gt)
 
 wave_2_start <- as.Date("2021-02-15")
 today <- Sys.Date() - 1
 n_lag <- 30
 
-d <- read_csv("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-data/master/2021-04-20/everything.csv",
+d <- read_csv(glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-data/master/{today}/everything.csv"),
               col_types = cols()) %>%
   dplyr::filter(place == "India") %>%
   mutate(
