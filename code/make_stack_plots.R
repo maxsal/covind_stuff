@@ -72,11 +72,11 @@ for (i in seq_along(f)) {
     )
   
   
-  if (!dir.exists(here("stack_plots", glue("{today}")))) {
-    dir.create(path = here("stack_plots", glue("{today}")), recursive = T)
+  if (!dir.exists(here("stack_plots", glue("{max_date}")))) {
+    dir.create(path = here("stack_plots", glue("{max_date}")), recursive = T)
   }
   
-  png(filename = here("stack_plots", glue("{today}"), glue("{f[i]}_plot.png")),
+  png(filename = here("stack_plots", glue("{max_date}"), glue("{f[i]}_plot.png")),
       width = 10, height = 8, units = "in", res = 320)
     gridExtra::grid.arrange(inc_plt, tvr_plt, ncol = 1, nrow = 2)
   dev.off()
