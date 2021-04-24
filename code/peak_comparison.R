@@ -236,7 +236,7 @@ tib %>%
   ) %>%
   tab_spanner(
     label   = "Wave 2",
-    columns = vars(`February 15, 2021 - April 22, 2021`)
+    columns = vars(`February 15, 2021 - April 23, 2021`)
   ) %>% 
   cols_move_to_start(vars(Stats)) %>%
   tab_style(
