@@ -43,11 +43,11 @@ wave_tab_stats <- function(dat, n_lag = 30) {
     ),
     "max_daily_deaths" = tibble(
       "count" = dat %>%
-        dplyr::filter(daily_deaths < 2000) %>%
+        # dplyr::filter(daily_deaths < 2000) %>%
         dplyr::filter(daily_deaths == max(daily_deaths, na.rm = T)) %>%
         pull(daily_deaths),
       "date" = dat %>%
-        dplyr::filter(daily_deaths < 2000) %>%
+        # dplyr::filter(daily_deaths < 2000) %>%
         dplyr::filter(daily_deaths == max(daily_deaths, na.rm = T)) %>%
         pull(date)
     ),
@@ -151,7 +151,7 @@ get_col <- function(a) {
     glue("{format(a$max_daily_cases$count, big.mark = ',')} ({format(a$max_daily_cases$date, '%B %e')})"),
     glue("{round(a$max_eff_r$r_est, 2)} ({format(a$max_eff_r$date, '%B %e')}, daily = {format(a$max_eff_r$daily_cases, big.mark = ',')}, total = {format(a$max_eff_r$total_cases, big.mark = ',')})"),
     glue("{format(a$max_daily_deaths$count, big.mark = ',')} ({format(a$max_daily_deaths$date, '%B %e')})"),
-    glue("{round(a$max_daily_tpr$daily_tpr * 100, 1)}% ({format(a$max_daily_tpr$date, '%B %e')}: {format(a$max_daily_tpr$daily_cases, big.mark = ',')}, {format(a$max_daily_tpr$test, big.mark = ',')})"),
+    glue("{round(a$max_daily_tpr$daily_tpr * 100, 1)}% ({format(a$max_daily_tpr$date, '%B %e')}: {format(a$max_daily_tpr$daily_cases, big.mark = ',')} cases, {format(a$max_daily_tpr$test, big.mark = ',')} tests)"),
     glue("{format(a$max_daily_tests$daily_tests, big.mark = ',')} ({format(a$max_daily_tests$date, '%B %e')})"),
     glue("{format(a$quick_stats$total_cases, big.mark= ',')}"),
     glue("{format(a$quick_stats$total_deaths, big.mark = ',')}"),
@@ -167,6 +167,9 @@ col_2 <- get_col(a)
 col_3 <- get_col(b)
 col_4 <- get_col(c)
 
+col_2[3] <- "2,004 (June 16, reporting blip); 1,281 (September 15)"
+col_3[3] <- "2,004 (June 16, reporting blip); 1,281 (September 15)"
+
 tib <- tibble(
   "Stats" = col_1,
   "March 24, 2020 - February 14, 2021" = col_2,
@@ -174,7 +177,7 @@ tib <- tibble(
   "tmp" = col_4
 )
 
-names(tib)[names(tib) == "tmp"] <- glue("February 15, 2021 - {format(today, '%B %e, %Y')}")
+names(tib)[names(tib) == "tmp"] <- glue("February 15, 2021 - {format(today - 1, '%B %e, %Y')}")
 
 tib %>%
   gt() %>%
@@ -191,7 +194,7 @@ tib %>%
   tab_style(
     style = cell_text(
       size      = px(10),
-      color     = "#999",
+      color     = "#5e5e5e",
       font      = "helvetica",
       transform = "uppercase"
     ),
@@ -222,7 +225,7 @@ tib %>%
   # title
   tab_header(
     title    = md("**Comparing COVID-19 Waves in India**"),
-    subtitle = glue("as of {format(today, '%B %e')}")
+    subtitle = glue("data through {format(today - 1, '%B %e')}")
   ) %>%
   # caption
   tab_source_note(
@@ -233,17 +236,18 @@ tib %>%
   # add and format column spanners
   tab_spanner(
     label   = "Wave 1",
+    # columns = vars(`June 3, 2020 - February 14, 2021`)
     columns = vars(`March 24, 2020 - February 14, 2021`, `June 3, 2020 - February 14, 2021`)
   ) %>%
   tab_spanner(
     label   = "Wave 2",
-    columns = vars(`February 15, 2021 - April 23, 2021`)
+    columns = 4
   ) %>% 
   cols_move_to_start(vars(Stats)) %>%
   tab_style(
     style = cell_text(
       size      = px(10),
-      color     = "#999",
+      color     = "#5e5e5e",
       font      = "helvetica",
       transform = "uppercase"
     ),
