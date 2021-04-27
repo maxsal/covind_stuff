@@ -61,7 +61,7 @@ for (i in seq_along(f)) {
       x        = "Date",
       y        =  "R(t)",
       caption  = glue("**Sources:** covid19india.org; covind19.org<br>",
-                      "**\uA9 COVI-IND-19 Study Group**")
+                      "**\uA9 COV-IND-19 Study Group**")
     ) +
     theme_classic() +
     theme(
