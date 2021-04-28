@@ -22,7 +22,7 @@ for (i in seq_along(d)) {
 
 obs <- read_csv(glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-data/master/{today}/everything.csv"),
                 col_types = cols()) %>%
-  filter(place == "India" & date >= "2021-01-01") %>%
+  filter(place == "India" & date >= "2021-02-15") %>%
   mutate(scenario = "Observed")
 
 cols <- c(

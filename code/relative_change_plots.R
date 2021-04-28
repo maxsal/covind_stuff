@@ -175,7 +175,60 @@ grid::grid.newpage()
 grid::grid.draw(rbind(gA, gB))
 dev.off()
 
-d %>%
+
+india2 <- d %>%
   filter(date >= (today - 30)) %>%
-  ggplot(aes(x = date, y = tpr_change / tests_change)) +
-  geom_smooth(method = "loess", formula = "y ~ x", se = FALSE, span = 0.2)
+  ggplot(aes(x = date)) +
+  geom_bar(aes(y = daily_tests), stat = "identity", fill = "#FF9933") +
+  geom_bar(aes(y = daily_cases), stat = "identity", fill = "#138808") +
+  labs(
+    title   = "COVID-19: <b style='color:#138808'>Daily cases</b> and <b style='color:#FF9933'>daily tests</b> in India",
+    subtitle = glue("{format(today - 30, '%B %e, %Y')} to {format(today, '%B %e, %Y')}"),
+    x       = "Date",
+    y       = glue("Daily count"),
+    caption = "**Source:** covid19india.org<br>**\uA9 COV-IND-19 Study Group**"
+  ) +
+  scale_y_continuous(labels = scales::comma) +
+  theme_classic() +
+  theme(
+    text = element_text(family = "Lato"),
+    plot.title = element_markdown(size = 18, face = "bold"),
+    plot.subtitle = element_text(color = "gray40", size = 14),
+    plot.caption = element_markdown(hjust = 0)
+  )
+
+us2 <- m %>%
+  ggplot(aes(x = date)) +
+  geom_bar(aes(y = daily_tests), stat = "identity", fill = "#3C3B6E") +
+  geom_bar(aes(y = daily_cases), stat = "identity", fill = "#B22234") +
+  labs(
+    title   = "COVID-19: <b style='color:#B22234'>Daily cases</b> and <b style='color:#3C3B6E'>daily tests</b> in the US",
+    subtitle = glue("{format(as.Date('2020-11-01'), '%B %e, %Y')} to {format(us_end, '%B %e, %Y')}"),
+    x       = "Date",
+    y       = glue("Daily count"),
+    caption = "**Source:** JHU CSSE GitHub (cases); The COVID Tracking Projects (tests)<br>**\uA9 COV-IND-19 Study Group**"
+  ) +
+  scale_y_continuous(labels = scales::comma) +
+  theme_classic() +
+  theme(
+    text = element_text(family = "Lato"),
+    plot.title = element_markdown(size = 18, face = "bold"),
+    plot.subtitle = element_text(color = "gray40", size = 14),
+    plot.caption = element_markdown(hjust = 0)
+  )
+
+
+gC <- ggplotGrob(india2)
+gD <- ggplotGrob(us2)
+
+png(filename = here("fig", glue("us_v_india_bar_plot.png")),
+    width = 10, height = 12, units = "in", res = 320)
+grid::grid.newpage()
+grid::grid.draw(rbind(gC, gD))
+dev.off()
+
+cairo_pdf(filename = here("fig", glue("us_v_india_bar_plot.pdf")),
+          width = 10, height = 12)
+grid::grid.newpage()
+grid::grid.draw(rbind(gC, gD))
+dev.off()
