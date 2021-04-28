@@ -2,7 +2,7 @@ source("libraries.R")
 source("functions.R")
 
 start_date <- "2020-03-24"
-max_date   <- Sys.Date() - 1
+max_date   <- Sys.Date() 
 
 d <- read_csv(glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-data/master/{max_date}/everything.csv"),
               col_types = cols())

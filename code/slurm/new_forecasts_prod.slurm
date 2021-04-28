@@ -1,10 +1,10 @@
 #!/bin/bash
 
 #SBATCH --mail-type=END
-#SBATCH --time=0-10:00:00
+#SBATCH --time=0-20:00:00
 #SBATCH --job-name=wave2_prod
-#SBATCH --mem-per-cpu=8G
-#SBATCH --array=1-5
+#SBATCH --mem-per-cpu=20G
+#SBATCH --array=1-6
 #SBATCH --output=/home/%u/slurm_output/slurm-%A_%a.out
 #SBATCH --account=covid19_project1
 #SBATCH --partition=standard

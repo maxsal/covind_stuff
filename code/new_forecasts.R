@@ -62,7 +62,7 @@ if (arrayid == 1) {
   Y           <- unlist(NI_complete/N-R)
   
   casename   <- last_obs + 1
-  pie        <- bake_pi(start_proj = start_proj, last_proj = last_proj)
+  pie        <- bake_pi(today = today, start_proj = start_proj, last_proj = last_proj)
   
   march1_mod <- tvt.eSIR(
     Y,
@@ -109,7 +109,7 @@ if (arrayid == 2) {
   Y           <- unlist(NI_complete/N-R)
   
   casename   <- last_obs + 1
-  pie        <- bake_pi(start_proj = start_proj, last_proj = last_proj)
+  pie        <- bake_pi(today = today, start_proj = start_proj, last_proj = last_proj)
   
   march15_mod <- tvt.eSIR(
     Y,
@@ -156,7 +156,7 @@ if (arrayid == 3) {
   Y           <- unlist(NI_complete/N-R)
   
   casename   <- last_obs + 1
-  pie        <- bake_pi(start_proj = start_proj, last_proj = last_proj)
+  pie        <- bake_pi(today = today, start_proj = start_proj, last_proj = last_proj)
   
   march30_mod <- tvt.eSIR(
     Y,
@@ -203,7 +203,7 @@ if (arrayid == 4) {
   Y           <- unlist(NI_complete/N-R)
   
   casename   <- last_obs + 1
-  pie        <- bake_pi(start_proj = start_proj, last_proj = last_proj)
+  pie        <- bake_pi(today = today, start_proj = start_proj, last_proj = last_proj)
   
   april15_mod <- tvt.eSIR(
     Y,
@@ -250,7 +250,7 @@ if (arrayid == 5) {
   Y           <- unlist(NI_complete/N-R)
   
   casename   <- last_obs + 1
-  pie        <- bake_pi(start_proj = start_proj, last_proj = last_proj)
+  pie        <- bake_pi(today = today, start_proj = start_proj, last_proj = last_proj)
   
   april25_mod <- tvt.eSIR(
     Y,
@@ -271,6 +271,50 @@ if (arrayid == 5) {
   )
   
   clean_out <- april25_mod %>% cleanr_esir(N = N, adj = T, adj_len = 2, name = "Informed")   
+  write_tsv(clean_out$data, file = paste0("./", casename, "_data.txt"))
+  write_tsv(clean_out$out_tib, file = paste0("./", casename, "_out_table.txt"))
+  
+}
+
+if (arrayid == 6) {
+  
+  message("no intervention")
+  last_obs   <- today - 1
+  start_obs  <- last_obs - 99
+  start_proj <- last_obs + 1
+  last_proj  <- last_obs + 60
+  proj_days  <- as.numeric(last_proj - start_proj) - 1
+  esir_days  <- as.numeric(last_proj - start_obs)
+  
+  d <- read_csv(glue::glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-data/master/{today}/everything.csv"),
+                col_types = cols()) %>%
+    filter(place == "India" & date >= start_obs & date <= last_obs)
+  
+  NI_complete <- d$cases
+  RI_complete <- d$recovered + d$deaths
+  N           <- 1.34e9                          # population of India
+  R           <- unlist(RI_complete/N)           # proportion of recovered per day
+  Y           <- unlist(NI_complete/N-R)
+  
+  casename   <- "no_intervention"
+  
+  no_int_mod <- tvt.eSIR(
+    Y,
+    R,
+    begin_str      = format(start_obs, "%m/%d/%Y"),
+    death_in_R     = 0.2,
+    T_fin          = esir_days,
+    R0             = R_0,
+    dic            = TRUE,
+    casename       = casename,
+    save_files     = save_files,
+    save_mcmc      = save_mcmc,
+    save_plot_data = save_plot_data,
+    M              = Ms,
+    nburnin        = nburnins
+  )
+  
+  clean_out <- no_int_mod %>% cleanr_esir(N = N, adj = T, adj_len = 2, name = "Informed")   
   write_tsv(clean_out$data, file = paste0("./", casename, "_data.txt"))
   write_tsv(clean_out$out_tib, file = paste0("./", casename, "_out_table.txt"))
   
