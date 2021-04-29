@@ -114,7 +114,8 @@ us_end <- as.Date("2021-02-15")
 m <- y %>% left_join(x, by = "date") %>%
   dplyr::mutate(
     tests_change = (daily_tests - dplyr::lag(daily_tests, n_lag)) / dplyr::lag(daily_tests, n_lag),
-    cases_change = (daily_cases - dplyr::lag(daily_cases, n_lag)) / dplyr::lag(daily_cases, n_lag)
+    cases_change = (daily_cases - dplyr::lag(daily_cases, n_lag)) / dplyr::lag(daily_cases, n_lag),
+    daily_tpr = daily_cases / daily_tests
   ) %>%
   filter(date >= "2020-11-01" & date <= us_end)
 
@@ -175,12 +176,18 @@ grid::grid.newpage()
 grid::grid.draw(rbind(gA, gB))
 dev.off()
 
+coeff_d <- .25 / d %>% filter(date >= (today - 30)) %>% pull(daily_tests) %>% max(., na.rm = T)
+tpr_d_mag <- d %>% filter(date == "2021-04-20") %>% pull(daily_tpr)
 
 india2 <- d %>%
   filter(date >= (today - 30)) %>%
   ggplot(aes(x = date)) +
-  geom_bar(aes(y = daily_tests), stat = "identity", fill = "#FF9933") +
+  geom_bar(aes(y = daily_tests), stat = "identity", fill = "#FF9933", alpha = 0.5) +
   geom_bar(aes(y = daily_cases), stat = "identity", fill = "#138808") +
+  geom_line(aes(y = daily_tpr / coeff_d), size = 1) +
+  annotate("segment", x = as.Date("2021-04-20"), xend = as.Date("2021-04-20"), y = tpr_d_mag / coeff_d, yend = 0.125 / coeff_d) +
+  annotate("label", label = "Test-positive rate",
+           x = as.Date("2021-04-20"), y = 0.13 / coeff_d, alpha = 0.8) +
   labs(
     title   = "COVID-19: <b style='color:#138808'>Daily cases</b> and <b style='color:#FF9933'>daily tests</b> in India",
     subtitle = glue("{format(today - 30, '%B %e, %Y')} to {format(today, '%B %e, %Y')}"),
@@ -188,7 +195,7 @@ india2 <- d %>%
     y       = glue("Daily count"),
     caption = "**Source:** covid19india.org<br>**\uA9 COV-IND-19 Study Group**"
   ) +
-  scale_y_continuous(labels = scales::comma) +
+  scale_y_continuous(labels = scales::comma, sec.axis = sec_axis(~.*coeff_d, name = "Test-positive rate", labels = scales::percent)) +
   theme_classic() +
   theme(
     text = element_text(family = "Lato"),
@@ -196,11 +203,19 @@ india2 <- d %>%
     plot.subtitle = element_text(color = "gray40", size = 14),
     plot.caption = element_markdown(hjust = 0)
   )
+india2
+
+coeff_m <- .25 / m %>% pull(daily_tests) %>% max(., na.rm = T)
+tpr_m_mag <- m %>% filter(date == "2021-01-30") %>% pull(daily_tpr)
 
 us2 <- m %>%
   ggplot(aes(x = date)) +
-  geom_bar(aes(y = daily_tests), stat = "identity", fill = "#3C3B6E") +
+  geom_bar(aes(y = daily_tests), stat = "identity", fill = "#3C3B6E", alpha = 0.5) +
   geom_bar(aes(y = daily_cases), stat = "identity", fill = "#B22234") +
+  geom_line(aes(y = daily_tpr / coeff_m), size = 1) +
+  annotate("segment", x = as.Date("2021-01-30"), xend = as.Date("2021-01-30"), y = tpr_m_mag / coeff_m, yend = 0.125 / coeff_m) +
+  annotate("label", label = "Test-positive rate",
+           x = as.Date("2021-01-30"), y = 0.13 / coeff_m, alpha = 0.8) +
   labs(
     title   = "COVID-19: <b style='color:#B22234'>Daily cases</b> and <b style='color:#3C3B6E'>daily tests</b> in the US",
     subtitle = glue("{format(as.Date('2020-11-01'), '%B %e, %Y')} to {format(us_end, '%B %e, %Y')}"),
@@ -208,7 +223,7 @@ us2 <- m %>%
     y       = glue("Daily count"),
     caption = "**Source:** JHU CSSE GitHub (cases); The COVID Tracking Projects (tests)<br>**\uA9 COV-IND-19 Study Group**"
   ) +
-  scale_y_continuous(labels = scales::comma) +
+  scale_y_continuous(labels = scales::comma, sec.axis = sec_axis(~.*coeff_m, name = "Test-positive rate", labels = scales::percent)) +
   theme_classic() +
   theme(
     text = element_text(family = "Lato"),
@@ -216,7 +231,7 @@ us2 <- m %>%
     plot.subtitle = element_text(color = "gray40", size = 14),
     plot.caption = element_markdown(hjust = 0)
   )
-
+us2
 
 gC <- ggplotGrob(india2)
 gD <- ggplotGrob(us2)
