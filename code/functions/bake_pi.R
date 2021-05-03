@@ -1,4 +1,4 @@
-bake_pi <- function(pi_start = NULL, start_proj, last_proj, plot = TRUE) {
+bake_pi <- function(pi_start = NULL, today, start_proj, last_proj, plot = TRUE) {
   
   message("**beep boop** baking pi...")
   
@@ -12,7 +12,7 @@ bake_pi <- function(pi_start = NULL, start_proj, last_proj, plot = TRUE) {
   dates  <- format(as.Date(start_proj:(last_proj - 1), origin = "1970-01-01"), "%m/%d/%Y")
   pi_end <- pi_start + length(dates) - 1
   
-  d <- read_csv(glue::glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-data/master/{Sys.Date() - 1}/everything.csv"),
+  d <- read_csv(glue::glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-data/master/{today}/everything.csv"),
                 col_types = cols()) %>%
     filter(place == "India")
   

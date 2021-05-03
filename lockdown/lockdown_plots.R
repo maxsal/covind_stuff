@@ -4,7 +4,7 @@ library(here)
 
 
 today <- Sys.Date() - 1
-d <- c("2021-03-01", "2021-03-15", "2021-03-30", "2021-04-15", "2021-04-25")
+d <- c("2021-03-01", "2021-03-15", "2021-03-30", "2021-04-15", "2021-04-25", "no_intervention")
 
 for (i in seq_along(d)) {
   
@@ -26,12 +26,13 @@ obs <- read_csv(glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-d
   mutate(scenario = "Observed")
 
 cols <- c(
-  "Observed" = "black",
-  "March 1"  = viridis::viridis(5)[1],
-  "March 15" = viridis::viridis(5)[2],
-  "March 30" = viridis::viridis(5)[3],
-  "April 15" = viridis::viridis(5)[4],
-  "April 25" = viridis::viridis(5)[5]
+  "Observed"        = "black",
+  "March 1"         = viridis::viridis(5)[1],
+  "March 15"        = viridis::viridis(5)[2],
+  "March 30"        = viridis::viridis(5)[3],
+  "April 15"        = viridis::viridis(5)[4],
+  "April 25"        = viridis::viridis(5)[5],
+  "No intervention" = "red"
 )
 
 dat %>%
@@ -41,7 +42,8 @@ dat %>%
       scenario == "2021-03-15" ~ "March 15",
       scenario == "2021-03-30" ~ "March 30",
       scenario == "2021-04-15" ~ "April 15",
-      scenario == "2021-04-25" ~ "April 25"
+      scenario == "2021-04-25" ~ "April 25",
+      scenario == "no_intervention" ~ "No intervention"
     )
   ) %>%
   ggplot(aes(x = date, y = value, color = scenario, group = scenario)) +
@@ -63,14 +65,15 @@ dat %>%
   )
 ggsave(here("lockdown", "fig", "total_case_lockdown.pdf"), width = 7, height = 5, device = cairo_pdf)
 
-dat %>%
+plt2 <- dat %>%
   mutate(
     scenario = case_when(
       scenario == "2021-03-01" ~ "March 1",
       scenario == "2021-03-15" ~ "March 15",
       scenario == "2021-03-30" ~ "March 30",
       scenario == "2021-04-15" ~ "April 15",
-      scenario == "2021-04-25" ~ "April 25"
+      scenario == "2021-04-25" ~ "April 25",
+      scenario == "no_intervention" ~ "No intervention"
     )
   ) %>%
   ggplot(aes(x = date, y = incidence, color = scenario, group = scenario)) +
@@ -91,4 +94,5 @@ dat %>%
     legend.position = "top",
     legend.title = element_blank()
   )
+plt2
 ggsave(here("lockdown", "fig", "daily_case_lockdown.pdf"), width = 7, height = 5, device = cairo_pdf)
