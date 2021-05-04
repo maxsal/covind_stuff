@@ -1,4 +1,4 @@
-bake_pi <- function(pi_start = NULL, today, start_proj, last_proj, plot = TRUE) {
+bake_pi <- function(pi_start = NULL, today, start_proj, last_proj, span = 0.75, plot = TRUE) {
   
   message("**beep boop** baking pi...")
   
@@ -25,11 +25,21 @@ bake_pi <- function(pi_start = NULL, today, start_proj, last_proj, plot = TRUE) 
     ) %>%
     select(place, date, r_est, pis)
   
+  smoothr <- taco %>%
+    arrange(date) %>%
+    mutate(nom = 1:nrow(taco)) %>%
+    loess(pis ~ nom, data = ., span = span) %>%
+    predict()
+  
+  taco$smooth_pis <- smoothr
+  
   out <- list(
-    "data"     = taco,
-    "dates"    = dates,
-    "pis"      = c(1, taco$pis),
-    "start_r"  = start_r
+    "data"        = taco,
+    "dates"       = dates,
+    "pis"         = c(1, taco$pis),
+    "start_r"     = start_r,
+    "smooth_pis"  = c(1, taco$smooth_pis),
+    "smooth_span" = span
   )
   
   if (plot == TRUE) {
@@ -37,6 +47,7 @@ bake_pi <- function(pi_start = NULL, today, start_proj, last_proj, plot = TRUE) 
     out[["plot"]] <- taco %>%
       ggplot(aes(x = date, y = pis)) +
       geom_line(size = 1) +
+      geom_line(aes(y = smooth_pis), size = 1, linetype = 2, color = "gray40") +
       labs(
         title = "Pi schedule",
         x     = "Date",
