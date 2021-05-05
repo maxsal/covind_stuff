@@ -113,3 +113,5 @@ for (i in seq_along(abbrevs)) {
   
   
 }
+
+system("git status")
