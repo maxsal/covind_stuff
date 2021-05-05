@@ -1,7 +1,7 @@
 source("libraries.R")
 source("functions.R")
 
-max_date <- "2021-04-11"
+max_date <- "2021-05-03"
 
 # get data ------------
 state_data <- get_india_state_data(max_date = max_date)

@@ -9,11 +9,11 @@ d <- c("2021-03-01", "2021-03-15", "2021-03-30", "2021-04-15", "2021-04-25", "no
 for (i in seq_along(d)) {
   
   if (i == 1) {
-    dat <- read_tsv(here("lockdown", "data", glue("{d[i]}_data.txt")),
+    dat <- read_tsv(here("lockdown", "data", glue("{d[i]}_june_smooth1_data.txt")),
                     col_types = cols()) %>% mutate(scenario = d[i])
   } else {
     dat <- bind_rows(dat, 
-                     read_tsv(here("lockdown", "data", glue("{d[i]}_data.txt")),
+                     read_tsv(here("lockdown", "data", glue("{d[i]}_june_smooth1_data.txt")),
                               col_types = cols()) %>% mutate(scenario = d[i])
                      )
   }
@@ -63,7 +63,7 @@ dat %>%
     legend.position = "top",
     legend.title = element_blank()
   )
-ggsave(here("lockdown", "fig", "total_case_lockdown.pdf"), width = 7, height = 5, device = cairo_pdf)
+ggsave(here("lockdown", "fig", "total_case_lockdown_june_smooth1.pdf"), width = 7, height = 5, device = cairo_pdf)
 
 plt2 <- dat %>%
   mutate(
@@ -95,4 +95,4 @@ plt2 <- dat %>%
     legend.title = element_blank()
   )
 plt2
-ggsave(here("lockdown", "fig", "daily_case_lockdown.pdf"), width = 7, height = 5, device = cairo_pdf)
+ggsave(here("lockdown", "fig", "daily_case_lockdown_june_smooth1.pdf"), width = 7, height = 5, device = cairo_pdf)

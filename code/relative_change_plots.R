@@ -4,12 +4,12 @@ library(glue)
 library(ggtext)
 library(here)
 
-today <- Sys.Date() - 1
+today <- Sys.Date() - 2
 n_lag <- 7
 
 d <- read_csv(glue::glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-data/master/{today}/everything.csv"),
               col_types = cols()) %>%
-  filter(place == "India") %>%
+  dplyr::filter(place == "India") %>%
   dplyr::select(date, cases, daily_cases, total_tests, daily_tests) %>%
   dplyr::mutate(
     daily_tpr = daily_cases / daily_tests
