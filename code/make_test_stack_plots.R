@@ -30,11 +30,11 @@ for (i in seq_along(abbrevs)) {
   
   tmp_place <- d %>% pull(place) %>% unique()
 
-  coeff_d <- .25 / d %>% filter(date >= (today - 30)) %>% pull(daily_tests) %>% max(., na.rm = T)
-  tpr_d_mag <- d %>% filter(date == "2021-04-20") %>% pull(daily_tpr)
+  coeff_d <- .25 / d %>% dplyr::filter(date >= (today - 30)) %>% pull(daily_tests) %>% max(., na.rm = T)
+  tpr_d_mag <- d %>% dplyr::filter(date == "2021-04-20") %>% pull(daily_tpr)
 
   bar_plt <- d %>%
-    filter(date >= (today - 30)) %>%
+    dplyr::filter(date >= (today - 30)) %>%
     ggplot(aes(x = date)) +
     geom_bar(aes(y = daily_tests), stat = "identity", fill = "#FF9933", alpha = 0.5) +
     geom_bar(aes(y = daily_cases), stat = "identity", fill = "#138808") +
@@ -59,12 +59,12 @@ for (i in seq_along(abbrevs)) {
     )
   bar_plt
 
-  med_case_change <- d %>% filter(date >= (today - 30)) %>% pull(cases_change) %>% median()
-  med_test_change <- d %>% filter(date >= (today - 30)) %>% pull(tests_change) %>% median()
+  med_case_change <- d %>% dplyr::filter(date >= (today - 30)) %>% pull(cases_change) %>% median()
+  med_test_change <- d %>% dplyr::filter(date >= (today - 30)) %>% pull(tests_change) %>% median()
   
   
   line_plt <- d %>%
-    filter(date >= (today - 30)) %>%
+    dplyr::filter(date >= (today - 30)) %>%
     ggplot(aes(x = date)) +
     geom_hline(yintercept = 0, color = "gray40") +
     geom_hline(yintercept = med_test_change, color = "#FF9933", linetype = 2, size = 1) +
@@ -115,3 +115,6 @@ for (i in seq_along(abbrevs)) {
 }
 
 system("git status")
+system("git add .")
+system("git commit -m 'test commit'")
+system("git push")

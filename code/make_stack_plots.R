@@ -12,9 +12,9 @@ f <- d %>% pull(place) %>% unique()
 for (i in seq_along(f)) {
   
   inc_plt <- d %>%
-    filter(place == f[i]) %>%
-    filter(date >= start_date & date <= max_date) %>%
-    filter(daily_cases > 0 & daily_recovered > 0 & daily_deaths > 0) %>%
+    dplyr::filter(place == f[i]) %>%
+    dplyr::filter(date >= start_date & date <= max_date) %>%
+    dplyr::filter(daily_cases > 0 & daily_recovered > 0 & daily_deaths > 0) %>%
     select(date, daily_cases, daily_deaths, daily_recovered) %>%
     pivot_longer(names_to = "Trend", values_to = "count", -c(date)) %>%
     mutate(
@@ -87,3 +87,8 @@ for (i in seq_along(f)) {
   dev.off()
   
 }
+
+system("git status")
+system("git add .")
+system("git commit -m 'push new stack plots'")
+system("git push")
