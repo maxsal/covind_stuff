@@ -4,7 +4,7 @@ library(glue)
 library(ggtext)
 library(here)
 
-today <- Sys.Date() - 2
+today <- Sys.Date() - 1
 n_lag <- 7
 
 dat <- read_csv(glue::glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-data/master/{today}/everything.csv"),
@@ -116,5 +116,5 @@ for (i in seq_along(abbrevs)) {
 
 system("git status")
 system("git add .")
-system("git commit -m 'test commit'")
+system("git commit -m 'push new test stack plots'")
 system("git push")

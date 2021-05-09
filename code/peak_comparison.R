@@ -5,7 +5,7 @@ library(ggtext)
 library(gt)
 
 wave_2_start <- as.Date("2021-02-15")
-today <- Sys.Date() - 1 
+today <- Sys.Date() - 2 
 n_lag <- 30
 
 d <- read_csv(glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-data/master/{today}/everything.csv"),
@@ -113,6 +113,18 @@ wave_tab_stats <- function(dat, n_lag = 30) {
       ) %>%
       filter(
         change == max(change, na.rm = T)
+      ),
+    "rel_test_inc" = dat %>%
+      dplyr::select(date, daily_tests) %>%
+      mutate(
+        lag_date = dplyr::lag(date, n_lag),
+        lag_tests = dplyr::lag(daily_tests, n_lag)
+      ) %>%
+      mutate(
+        change = (daily_tests - lag_tests) / lag_tests
+      ) %>%
+      filter(
+        change == max(change, na.rm = T)
       )
   )
   
@@ -129,7 +141,8 @@ col_1 <- c("Maximimum # Daily New Cases",
            "Case fatality rates",
            glue("Biggest {n_lag}-day relative increase in cases"),
            glue("Biggest {n_lag}-day relative increase in deaths"),
-           glue("Biggest {n_lag}-day relative increase in TPR"))
+           glue("Biggest {n_lag}-day relative increase in TPR"),
+           glue("Biggest {n_lag}-day relative increase in daily tests"))
 
 col_2 <- c(
   glue("{format(a$max_daily_cases$count, big.mark = ',')} ({format(a$max_daily_cases$date, '%B %e')})"),
@@ -158,7 +171,8 @@ get_col <- function(a) {
     glue("{round(a$quick_stats$cfr * 100, 1)}%"),
     glue("{format(round(a$rel_case_inc$change + 1, 2), nsmall = 2)}x, {format(round(a$rel_case_inc$change * 100, 2), nsmall = 2)}% ({format(a$rel_case_inc$lag_cases, big.mark = ',')} on {format(a$rel_case_inc$lag_date, '%B %e')} to {format(a$rel_case_inc$daily_cases, big.mark = ',')} on {format(a$rel_case_inc$date, '%B %e')})"),
     glue("{format(round(a$rel_death_inc$change + 1, 2), nsmall = 2)}x, {format(round(a$rel_death_inc$change * 100, 2), nsmall = 2)}% ({format(a$rel_death_inc$lag_deaths, big.mark = ',')} on {format(a$rel_death_inc$lag_date, '%B %e')} to {format(a$rel_death_inc$daily_deaths, big.mark = ',')} on {format(a$rel_death_inc$date, '%B %e')})"),
-    glue("{format(round(a$rel_tpr_inc$change + 1, 2), nsmall = 2)}x, {format(round(a$rel_tpr_inc$change * 100, 2), nsmall = 2)}% ({round(a$rel_tpr_inc$lag_tpr*100, 2)}% on {format(a$rel_tpr_inc$lag_date, '%B %e')} to {round(a$rel_tpr_inc$daily_tpr * 100, 2)}% on {format(a$rel_tpr_inc$date, '%B %e')})")
+    glue("{format(round(a$rel_tpr_inc$change + 1, 2), nsmall = 2)}x, {format(round(a$rel_tpr_inc$change * 100, 2), nsmall = 2)}% ({round(a$rel_tpr_inc$lag_tpr*100, 2)}% on {format(a$rel_tpr_inc$lag_date, '%B %e')} to {round(a$rel_tpr_inc$daily_tpr * 100, 2)}% on {format(a$rel_tpr_inc$date, '%B %e')})"),
+    glue("{format(round(a$rel_test_inc$change + 1, 2), nsmall = 2)}x, {format(round(a$rel_test_inc$change * 100, 2), nsmall = 2)}% ({format(a$rel_test_inc$lag_tests, big.mark = ',')} on {format(a$rel_test_inc$lag_date, '%B %e')} to {format(a$rel_test_inc$daily_tests, big.mark = ',')} on {format(a$rel_test_inc$date, '%B %e')})")
   )
   
 }
@@ -212,8 +226,8 @@ tib %>%
   ) %>%
   # column widths
   cols_width(
-    vars(Stats) ~ px(210),
-    vars(`March 24, 2020 - February 14, 2021`) ~ px(275),
+    vars(Stats) ~ px(230),
+    vars(`March 24, 2020 - February 14, 2021`) ~ px(285),
     vars(`June 3, 2020 - February 14, 2021`) ~ px(275),
     # vars(R, CFR) ~ px(75),
     everything() ~ px(300)
