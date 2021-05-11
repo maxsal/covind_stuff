@@ -1,10 +1,12 @@
-library(tidyverse)
-library(janitor)
-library(glue)
-library(ggtext)
-library(here)
+pacman::p_load(
+  tidyverse,
+  janitor,
+  glue,
+  ggtext,
+  here
+  )
 
-today <- Sys.Date() - 1
+today <- Sys.Date() 
 n_lag <- 7
 
 dat <- read_csv(glue::glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-data/master/{today}/everything.csv"),
