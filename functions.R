@@ -32,23 +32,39 @@ tidy_country <- function(data, place) {
 }
 
 # pull and clean national level data from covid19india.org ----------
-get_covid19india_data <- function(path = NULL) {
+get_covid19india_data <- function(path = NULL, death = FALSE) {
   
   if (is.null(path)) {
     path <- "https://api.covid19india.org/csv/latest/case_time_series.csv"
   }
   
-  readr::read_csv(path, col_types = cols()) %>%
-  janitor::clean_names() %>%
-  dplyr::mutate(
-    country = "India"
-  ) %>%
-  dplyr::select(country, date = date_ymd, count = total_confirmed) %>%
-  tidyr::drop_na(date, count) %>%
-  dplyr::arrange(date) %>%
-  dplyr::mutate(
-    incidence = count - dplyr::lag(count)
-  )
+  if (death == FALSE) {
+    readr::read_csv(path, col_types = cols()) %>%
+    janitor::clean_names() %>%
+    dplyr::mutate(
+      country = "India"
+    ) %>%
+    dplyr::select(country, date = date_ymd, count = total_confirmed) %>%
+    tidyr::drop_na(date, count) %>%
+    dplyr::arrange(date) %>%
+    dplyr::mutate(
+      incidence = count - dplyr::lag(count)
+    )
+  }
+  
+  if (death == TRUE) {
+    readr::read_csv(path, col_types = cols()) %>%
+      janitor::clean_names() %>%
+      dplyr::mutate(
+        country = "India"
+      ) %>%
+      dplyr::select(country, date = date_ymd, count = total_deceased) %>%
+      tidyr::drop_na(date, count) %>%
+      dplyr::arrange(date) %>%
+      dplyr::mutate(
+        incidence = count - dplyr::lag(count)
+      )
+  }
   
 }
 
@@ -70,18 +86,26 @@ covind_theme <- function(font_fam = "Lato", legend_pos = "top") {
 }
 
 # COVID-19 incidence by country plot -----------
-plot_cov_inc_by_country <- function(data, countries) {
+plot_cov_inc_by_country <- function(data, countries,
+                                    title = "COVID-19 incidence by country",
+                                    y_axis = "Daily cases") {
+  
+  if ("India" %in% countries) {
+    cap <- "**Source:** covid19india.org (India); JHU CSSE GitHub (non-India)"
+  } else {
+    cap <- "**Source:** JHU CSSE GitHub"
+  }
   
   data %>%
     dplyr::filter(country %in% countries) %>%
     ggplot(aes(x = date, y = incidence, group = country, color = country)) +
     geom_smooth(method = "loess", formula = "y ~ x", span = 0.15, se = FALSE, size = 1) +
     labs(
-      title    = "COVID-19 incidence by country",
+      title    = title,
       subtitle = glue::glue("from {format(min(data$date), '%B %e %Y')} to {format(max(data$date), '%B %e %Y')}"),
       x        = "Date",
-      y        = "Daily cases",
-      caption  = "**Source:** JHU CSSE GitHub"
+      y        = y_axis,
+      caption  = cap
     ) +
     scale_y_continuous(labels = scales::comma) +
     scale_color_brewer(palette = "Dark2") +
