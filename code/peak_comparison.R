@@ -1,10 +1,4 @@
-pacman::p_load(
-  tidyverse,
-  janitor,
-  glue,
-  ggtext,
-  gt
-)
+pacman::p_load(tidyverse, janitor, glue, ggtext, gt)
 
 wave_2_start <- as.Date("2021-02-15")
 today <- Sys.Date()
