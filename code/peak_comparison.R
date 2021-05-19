@@ -1,7 +1,7 @@
 pacman::p_load(tidyverse, janitor, glue, ggtext, gt)
 
 wave_2_start <- as.Date("2021-02-15")
-today <- Sys.Date() - 1
+today <- Sys.Date()
 n_lag <- 30
 
 d <- read_csv(glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-data/master/{today}/everything.csv"),
@@ -198,7 +198,7 @@ tib %>%
   ) %>%
   tab_style(
     style     = cell_text(weight = "bold"),
-    locations = cells_body(vars(Stats))
+    locations = cells_body(c(Stats))
   ) %>%
   # format column names
   tab_style(
@@ -222,9 +222,9 @@ tib %>%
   ) %>%
   # column widths
   cols_width(
-    vars(Stats) ~ px(230),
-    vars(`March 24, 2020 - February 14, 2021`) ~ px(285),
-    vars(`June 3, 2020 - February 14, 2021`) ~ px(275),
+    c(Stats) ~ px(230),
+    c(`March 24, 2020 - February 14, 2021`) ~ px(285),
+    c(`June 3, 2020 - February 14, 2021`) ~ px(275),
     # vars(R, CFR) ~ px(75),
     everything() ~ px(300)
   ) %>%
@@ -247,13 +247,13 @@ tib %>%
   tab_spanner(
     label   = "Wave 1",
     # columns = vars(`June 3, 2020 - February 14, 2021`)
-    columns = vars(`March 24, 2020 - February 14, 2021`, `June 3, 2020 - February 14, 2021`)
+    columns = c(`March 24, 2020 - February 14, 2021`, `June 3, 2020 - February 14, 2021`)
   ) %>%
   tab_spanner(
     label   = "Wave 2",
     columns = 4
   ) %>% 
-  cols_move_to_start(vars(Stats)) %>%
+  cols_move_to_start(c(Stats)) %>%
   tab_style(
     style = cell_text(
       size      = px(10),
@@ -275,7 +275,7 @@ tib %>%
   ) %>%
   cols_align(
     align = c("left"),
-    columns = vars(Stats)
+    columns = c(Stats)
   )
 
 d %>%
