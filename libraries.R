@@ -6,7 +6,8 @@ pacman::p_load(
   ggtext,
   extrafont,
   here,
-  httr
+  httr,
+  patchwork
 )
 # suppressMessages(library(tidyverse))
 # suppressMessages(library(janitor))

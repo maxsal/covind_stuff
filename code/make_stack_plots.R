@@ -76,14 +76,9 @@ for (i in seq_along(f)) {
     dir.create(path = here("stack_plots", glue("{max_date}")), recursive = T)
   }
   
-  
-  gA <- ggplotGrob(inc_plt)
-  gB <- ggplotGrob(tvr_plt)
-  
   png(filename = here("stack_plots", glue("{max_date}"), glue("{f[i]}_plot.png")),
       width = 10, height = 8, units = "in", res = 320)
-    grid::grid.newpage()
-    grid::grid.draw(rbind(gA, gB))
+    inc_plt / tvr_plt
   dev.off()
   
 }

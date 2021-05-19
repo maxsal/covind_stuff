@@ -1,6 +1,6 @@
-pacman::p_load(tidyverse, janitor, glue, ggtext, here)
+pacman::p_load(tidyverse, janitor, glue, ggtext, here, patchwork)
 
-today <- Sys.Date() - 1
+today <- Sys.Date()
 n_lag <- 7
 
 dat <- read_csv(glue::glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-data/master/{today}/everything.csv"),
@@ -94,17 +94,13 @@ for (i in seq_along(abbrevs)) {
     )
   line_plt
   
-  gA <- ggplotGrob(bar_plt)
-  gB <- ggplotGrob(line_plt)
-  
   if (!dir.exists(here("test_stack_plots", glue("{today}")))) {
     dir.create(path = here("test_stack_plots", glue("{today}")), recursive = T)
   }
   
   png(filename = here("test_stack_plots", glue("{today}"), glue("{tmp_place}_test_stack_plot.png")),
       width = 10, height = 12, units = "in", res = 320)
-  grid::grid.newpage()
-  grid::grid.draw(rbind(gA, gB))
+  bar_plt / line_plt
   dev.off()
   
   
