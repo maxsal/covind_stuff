@@ -100,7 +100,7 @@ for (i in seq_along(abbrevs)) {
   
   png(filename = here("test_stack_plots", glue("{today}"), glue("{tmp_place}_test_stack_plot.png")),
       width = 10, height = 12, units = "in", res = 320)
-  bar_plt / line_plt
+    print(bar_plt / line_plt)
   dev.off()
   
   
