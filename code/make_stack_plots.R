@@ -78,7 +78,7 @@ for (i in seq_along(f)) {
   
   png(filename = here("stack_plots", glue("{max_date}"), glue("{f[i]}_plot.png")),
       width = 10, height = 8, units = "in", res = 320)
-    inc_plt / tvr_plt
+    print(inc_plt / tvr_plt)
   dev.off()
   
 }
