@@ -4,6 +4,8 @@ library(lubridate)
 library(ggsci)
 library(ggrepel)
 library(janitor)
+library(glue)
+library(here)
 
 mh <- TRUE
 
@@ -17,7 +19,8 @@ obs <- read_csv("https://api.covid19india.org/csv/latest/case_time_series.csv",
     total_deaths = total_deceased
   ) %>%
   select(-date) %>%
-  rename(date = date_ymd)
+  rename(date = date_ymd) %>%
+  filter(date >= "2021-02-15")
 # obs <- read_tsv("observed_data.txt")
 
 scenarios <- c("2021-03-01", "2021-03-15", "2021-03-30",
