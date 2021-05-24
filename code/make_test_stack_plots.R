@@ -1,6 +1,6 @@
 pacman::p_load(tidyverse, janitor, glue, ggtext, here, patchwork)
 
-today <- Sys.Date()
+today <- Sys.Date() - 1
 n_lag <- 7
 
 dat <- read_csv(glue::glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-data/master/{today}/everything.csv"),
