@@ -185,11 +185,11 @@ total.smoothed <- total %>%
 
 total.smoothed.plot <- total.smoothed %>% 
   filter(scenario == "No intervention") %>% 
-  filter(date <= "2021-05-02") %>% 
+  filter(date <= "2021-05-19") %>% 
   mutate(scenario = "Observed") %>% 
   add_row(total.smoothed %>% 
             filter(scenario == "No intervention") %>% 
-            filter(date >= "2021-05-02")) %>%
+            filter(date >= "2021-05-14")) %>%
   add_row(total.smoothed %>% 
             filter(scenario == "March 15", 
                    date >= "2021-03-08")) %>% 
@@ -259,12 +259,12 @@ ggplot(aes(x = date, y = fitted)) +
   annotate("text", 
            x = as.Date("2021-05-02"), 
            y = 430831, 
-           label = "Observed data till May 2, 2021.", 
+           label = "Observed data till May 19, 2021.", 
            size = 5, 
            hjust = -0.1, 
            fontface = "bold") + 
   labs(title    = paste0("Predicted number of daily COVID-19 infections for different intervention dates."), 
-       subtitle = "Prediction period until May 20, 2021.\nFigures in boxes show peak number of cases for each intervention.",
+       subtitle = "Prediction period until May 31, 2021.\nFigures in boxes show peak number of cases for each intervention.",
        y        = "Observed cases",
        x        = "",
        color    = "Date of intervention",
@@ -282,9 +282,14 @@ ggplot(aes(x = date, y = fitted)) +
         plot.caption = element_text(size = 14,hjust = 0)) +
   scale_y_continuous(labels = scales::comma)
   
+if (mh == TRUE) {
+  tmp_filename <- "cases_mh.pdf"
+} else {
+  cfr <- cfr %>% filter(place == "India")
+  tmp_filename <- "cases.pdf"
+}  
   
-  
-ggsave(here("lockdown", "fig", "cases.pdf"), plot = cases.p, height = 12, width = 18, units = "in")
+ggsave(here("lockdown", "fig", tmp_filename), plot = cases.p, height = 12, width = 18, units = "in")
 
 
 
