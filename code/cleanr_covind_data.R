@@ -7,7 +7,6 @@ suppressPackageStartupMessages({
   library(janitor)
   library(scales)
   library(data.table)
-  require(magrittr)
   library(vroom)
   library(ggtext)
   library(here)

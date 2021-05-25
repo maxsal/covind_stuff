@@ -495,8 +495,13 @@ India_gt_table = function() {
     sf <- tp %>%
         dplyr::group_by(place) %>%
         dplyr::filter(date > max(as.Date(date)) - 7) %>%
-        mutate(dailyTPR7d = mean(daily_cases/daily_tests),
-               dailyCFR7d = mean(daily_deaths/daily_cases)) %>%
+      dplyr::mutate(
+        dailyTPR7 = daily_cases/daily_tests,
+        dailyCFR7 = daily_deaths/daily_cases
+        ) %>%
+      filter(is.finite(dailyTPR7)) %>%
+        mutate(dailyTPR7d = mean(dailyTPR7, na.rm = T),
+               dailyCFR7d = mean(dailyCFR7, na.rm = T)) %>%
         dplyr::filter(date == max(as.Date(date))) %>%
         distinct(date, .keep_all = TRUE) %>%
         ungroup() %>%
