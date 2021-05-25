@@ -1,10 +1,15 @@
-pacman::p_load(tidyverse, janitor, glue, ggtext, here, patchwork)
+pacman::p_load(tidyverse, janitor, glue, ggtext, here, patchwork, httr)
+source(here("code", "functions", "functions.R"))
 
 today <- Sys.Date() - 1
 n_lag <- 7
 
-dat <- read_csv(glue::glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-data/master/{today}/everything.csv"),
-              col_types = cols()) %>%
+count_dat <- get_count_data()
+test_dat  <- get_testing_data()
+
+dat <- count_dat %>%
+  left_join(test_dat %>% select(-abbrev),
+            by = c("place", "date")) %>%
   dplyr::mutate(
     daily_tpr = daily_cases / daily_tests
   ) %>%
@@ -21,7 +26,7 @@ abbrevs <- unique(dat$abbrev)
 
 for (i in seq_along(abbrevs)) {
   
-  message(glue("plotting {f[i]}..."))
+  message(glue("plotting {abbrevs[i]} [{i}/{length(abbrevs)} ({round(i*100/length(abbrevs))}%)]..."))
   
   d <- dat %>%
     dplyr::filter(abbrev == abbrevs[i])

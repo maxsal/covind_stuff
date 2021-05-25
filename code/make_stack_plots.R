@@ -1,17 +1,22 @@
 source("libraries.R")
 source("functions.R")
+source(here("code", "functions", "functions.R"))
+
+set_seed <- 46342
+set.seed(set_seed)
 
 start_date <- "2020-03-24"
-max_date   <- Sys.Date() - 1
+# max_date   <- Sys.Date() - 1
 
-d <- read_csv(glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-data/master/{max_date}/everything.csv"),
-              col_types = cols())
+d <- do_it_all()
 
 f <- d %>% pull(place) %>% unique()
 
+options(warn = -1)
+
 for (i in seq_along(f)) {
   
-  message(glue("plotting {f[i]}"))
+  message(glue("plotting {f[i]} [{i}/{length(f)} ({round(i*100/length(f))}%)]..."))
   
   inc_plt <- d %>%
     dplyr::filter(place == f[i]) %>%
@@ -84,6 +89,8 @@ for (i in seq_along(f)) {
   dev.off()
   
 }
+
+options(warn = 1)
 
 system("git status")
 system("git add .")
