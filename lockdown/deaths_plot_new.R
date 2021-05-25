@@ -7,7 +7,7 @@ library(janitor)
 library(glue)
 library(here)
 
-mh <- TRUE
+mh <- FALSE
 
 obs <- read_csv("https://api.covid19india.org/csv/latest/case_time_series.csv",
                 col_types = cols()) %>%
@@ -35,13 +35,13 @@ for (i in seq_along(scenarios)) {
   }
   
   if (i == 1) {
-    p <- read_tsv(here("lockdown", "data", "revised",
+    p <- read_tsv(here("lockdown", "data", "final",
                        tmp_filename),
                   col_types = cols()) %>%
       mutate(scenario = scenarios[i])
   } else {
     p <- bind_rows(p,
-                   read_tsv(here("lockdown", "data", "revised",
+                   read_tsv(here("lockdown", "data", "final",
                                  tmp_filename),
                             col_types = cols()) %>%
                      mutate(scenario = scenarios[i]))

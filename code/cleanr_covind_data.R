@@ -1,9 +1,18 @@
-library(tidyverse)
-library(janitor)
-library(glue)
-library(EpiEstim)
-library(ggtext)
-library(here)
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(EpiEstim)
+  library(gt)
+  library(glue)
+  library(lubridate)
+  library(janitor)
+  library(scales)
+  library(data.table)
+  require(magrittr)
+  library(vroom)
+  library(ggtext)
+  library(here)
+  library(httr)
+})
 source(here("code", "functions", "functions.R"))
 # source("scripts/functions.R")
 
@@ -15,14 +24,12 @@ thresh <- "2020-05-31"
 
 dat <- do_it_all(d = d)
 
-# abbrevs <- get_abbrevs(dat)
-# 
-# f_dat <- get_forecast_data(d = d, ab = abbrevs)
-
 cfr <- get_cfr(dat)
 
 r0_est <- get_r_est(dat)
 
-# write_csv(dat, here::here("data", "results", glue::glue("everything_{format(as.Date(thresh), '%Y%m%d')}.csv")))
-# write_csv(cfr, here::here("data", "results", glue::glue("cfr_{format(as.Date(thresh), '%Y%m%d')}.csv")))
-# write_csv(r0_est, here::here("data", "results", glue::glue("r0_est_{format(as.Date(thresh), '%Y%m%d')}.csv")))
+tabs <- India_gt_table()
+
+tabs$full
+tabs$point_in_time
+tabs$cumulative

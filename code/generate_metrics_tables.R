@@ -11,10 +11,13 @@ suppressPackageStartupMessages({
   library(vroom)
 })
 
-data_repo <- Sys.getenv("data_repo")
-today     <- Sys.getenv("today")
+today <- Sys.Date()
+# data_repo <- Sys.getenv("data_repo")
+# today     <- Sys.getenv("today")
 
 India_gt_table = function() {
+  
+  message("prepping...")
   
   tp    <- dat
   cfr1  <- cfr
@@ -288,6 +291,8 @@ India_gt_table = function() {
       ) %>%
     distinct()
   
+  message("making full table...")
+  
   tabl <- tib %>%
     gt() %>%
     # format table body text
@@ -414,6 +419,7 @@ India_gt_table = function() {
       locations = cells_column_spanners(("Cumulative metrics"))
     )
   
+  message("making point-in-time table...")
   # new table
   point_in_time <- tib %>%
     select(-`total cases`, -`total deaths`, -`TPR`, -CFR, 
@@ -521,6 +527,7 @@ India_gt_table = function() {
         rows = Location == "India")
     )
   
+  message("making cumulative table...")
   cumulative <- tib %>%
     select(-`# daily new cases`, -`# daily new deaths`, -`7-day average daily TPR`,
            -`7-day average daily CFR`, -R, -`daily tests`, -`daily vaccine doses`) %>%
@@ -617,8 +624,15 @@ India_gt_table = function() {
       locations = cells_body(rows = Location == "India")
     )
   
+  message("outputting...")
   list(full = tabl,
        point_in_time = point_in_time,
        cumulative = cumulative)
   
 }
+
+tabs <- India_gt_table()
+
+tabs$full
+tabs$point_in_time
+tabs$cumulative
