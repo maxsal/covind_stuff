@@ -11,6 +11,8 @@ f <- d %>% pull(place) %>% unique()
 
 for (i in seq_along(f)) {
   
+  message(glue("plotting {f[i]}"))
+  
   inc_plt <- d %>%
     dplyr::filter(place == f[i]) %>%
     dplyr::filter(date >= start_date & date <= max_date) %>%

@@ -21,6 +21,8 @@ abbrevs <- unique(dat$abbrev)
 
 for (i in seq_along(abbrevs)) {
   
+  message(glue("plotting {f[i]}..."))
+  
   d <- dat %>%
     dplyr::filter(abbrev == abbrevs[i])
   
