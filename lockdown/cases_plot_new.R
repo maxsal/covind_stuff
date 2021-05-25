@@ -68,22 +68,19 @@ p <- p %>%
 # [1] "March 1"         "March 15"        "March 30"        "April 15"        "April 25"       
 # [6] "No intervention"
 
-##march 1
+## no intervention ----------
 none <- obs %>% 
-  filter(date <= "2021-05-02") %>% 
+  filter(date <= "2021-05-15") %>% 
   select(date, daily_cases) %>% 
   rename(incidence = daily_cases) %>% 
   add_row(p %>%  
-            filter(scenario == "No intervention") %>% 
+            filter(scenario == "No intervention" & date > "2021-05-15") %>% 
             select(date, incidence) %>% 
             drop_na()) %>% 
-  add_column(scenario = "No intervention") %>%
-  mutate(
-    smoothed = predict(loess(incidence ~ as.numeric(date), span = 0.5))
-  )
+  add_column(scenario = "No intervention")
 
 
-##march 1
+## march 1 ----------
 mar_01 <- obs %>% 
   filter(date <= "2021-03-01") %>% 
   select(date, daily_cases) %>% 
@@ -92,12 +89,9 @@ mar_01 <- obs %>%
             filter(scenario == "March 1") %>% 
             select(date, incidence) %>% 
             drop_na()) %>% 
-  add_column(scenario = "March 1") %>%
-  mutate(
-    smoothed = predict(loess(incidence ~ as.numeric(date), span = 0.5))
-  )
+  add_column(scenario = "March 1")
 
-##march 15
+## march 15 ----------
 mar_15 <- obs %>% 
   filter(date <= "2021-03-15") %>% 
   select(date, daily_cases) %>% 
@@ -106,12 +100,9 @@ mar_15 <- obs %>%
             filter(scenario == "March 15") %>% 
             select(date, incidence) %>% 
             drop_na()) %>% 
-  add_column(scenario = "March 15") %>%
-  mutate(
-    smoothed = predict(loess(incidence ~ as.numeric(date), span = 0.5))
-  )
+  add_column(scenario = "March 15")
 
-##march 30
+## march 30 ----------
 mar_30 <- obs %>% 
   filter(date <= "2021-03-30") %>% 
   select(date, daily_cases) %>% 
@@ -120,12 +111,9 @@ mar_30 <- obs %>%
             filter(scenario == "March 30") %>% 
             select(date, incidence) %>% 
             drop_na()) %>% 
-  add_column(scenario = "March 30") %>%
-  mutate(
-    smoothed = predict(loess(incidence ~ as.numeric(date), span = 0.5))
-  )
+  add_column(scenario = "March 30")
 
-##april 15
+## april 15 ----------
 apr_15 <- obs %>% 
   filter(date <= "2021-04-15") %>% 
   select(date, daily_cases) %>% 
@@ -134,12 +122,9 @@ apr_15 <- obs %>%
             filter(scenario == "April 15") %>% 
             select(date, incidence) %>% 
             drop_na()) %>% 
-  add_column(scenario = "April 15")  %>%
-  mutate(
-    smoothed = predict(loess(incidence ~ as.numeric(date), span = 0.5))
-  )
+  add_column(scenario = "April 15")
 
-##april 30
+## april 30 ----------
 apr_30 <- obs %>% 
   filter(date <= "2021-04-30") %>% 
   select(date, daily_cases) %>% 
@@ -148,10 +133,7 @@ apr_30 <- obs %>%
             filter(scenario == "April 30") %>% 
             select(date, incidence) %>% 
             drop_na()) %>% 
-  add_column(scenario = "April 30") %>%
-  mutate(
-    smoothed = predict(loess(incidence ~ as.numeric(date), span = 0.5))
-  )
+  add_column(scenario = "April 30")
 
 total <- none %>% 
   add_row(mar_01) %>% 
@@ -163,11 +145,11 @@ total <- none %>%
 ggplotly(total %>% 
   filter(scenario != "March 1") %>% 
   filter(date <= "2021-05-31") %>% 
-  nest(-scenario) %>% 
+  nest(data = c(date, incidence)) %>% 
   mutate(m = purrr::map(data, loess, formula = incidence ~ as.numeric(date), span = 0.5),
          fitted = purrr::map(m, `[[`, "fitted")) %>% 
   select(-m) %>% 
-  unnest() %>% 
+  unnest(cols = c(data, fitted)) %>% 
   ggplot(aes(x = date, y = fitted)) + 
   #geom_point() + 
   geom_line(aes(colour = scenario)))
@@ -176,20 +158,20 @@ ggplotly(total %>%
 total.smoothed <- total %>% 
   filter(scenario != "March 1") %>% 
   filter(date <= "2021-05-31") %>% 
-  nest(-scenario) %>% 
+  nest(data = c(date, incidence)) %>% 
   mutate(m = purrr::map(data, loess, formula = incidence ~ as.numeric(date), span = 0.5),
          fitted = purrr::map(m, `[[`, "fitted")) %>% 
   select(-m) %>% 
-  unnest()
+  unnest(cols = c(data, fitted))
 
 
 total.smoothed.plot <- total.smoothed %>% 
   filter(scenario == "No intervention") %>% 
-  filter(date <= "2021-05-19") %>% 
+  filter(date < "2021-05-15") %>% 
   mutate(scenario = "Observed") %>% 
   add_row(total.smoothed %>% 
             filter(scenario == "No intervention") %>% 
-            filter(date >= "2021-05-14")) %>%
+            filter(date >= "2021-05-15")) %>%
   add_row(total.smoothed %>% 
             filter(scenario == "March 15", 
                    date >= "2021-03-08")) %>% 
@@ -204,12 +186,12 @@ total.smoothed.plot <- total.smoothed %>%
                    date >= "2021-04-21")) %>% 
   mutate(scenario = factor(scenario, levels = c("Observed", "March 15", "March 30", 
                                                 "April 15", "April 30", "No intervention")))%>%
-  filter(date <= "2021-05-20") 
+  filter(date <= "2021-05-31") 
 
 
 cases.p <- total.smoothed.plot %>% 
   filter(date >= "2021-02-15" & date <= "2021-05-31") %>%
-ggplot(aes(x = date, y = fitted)) + 
+  ggplot(aes(x = date, y = fitted)) + 
   geom_line(aes(color = scenario), size = 1) +
   scale_colour_lancet() + 
   #theme_bw() + 
@@ -259,7 +241,7 @@ ggplot(aes(x = date, y = fitted)) +
   annotate("text", 
            x = as.Date("2021-05-02"), 
            y = 430831, 
-           label = "Observed data till May 19, 2021.", 
+           label = "Observed data till May 24, 2021.", 
            size = 5, 
            hjust = -0.1, 
            fontface = "bold") + 
@@ -270,22 +252,22 @@ ggplot(aes(x = date, y = fitted)) +
        color    = "Date of intervention",
        caption  = "\uA9 COV-IND-19 Study Group") +
   theme_classic() +
-  theme(axis.text.x      = element_text(angle = 45, vjust = 0.5, size = 14, face = "bold"),
-        axis.text.y      = element_text(size = 14, face = "bold"),
-        axis.title.x = element_text(size = 14, face = "bold"),
-        axis.title.y = element_text(size = 14, face = "bold"),
-        legend.title = element_text(size = 14, face = "bold"),
-        legend.text = element_text(size = 14, face = "bold"),
+  theme(axis.text.x     = element_text(angle = 45, vjust = 0.5, size = 14, face = "bold"),
+        axis.text.y     = element_text(size = 14, face = "bold"),
+        axis.title.x    = element_text(size = 14, face = "bold"),
+        axis.title.y    = element_text(size = 14, face = "bold"),
+        legend.title    = element_text(size = 14, face = "bold"),
+        legend.text     = element_text(size = 14, face = "bold"),
         legend.position = "none",
-        plot.title = element_text(size = 18, face = "bold"),
-        plot.subtitle = element_text(size = 14,hjust = 0, color = "gray40"),
-        plot.caption = element_text(size = 14,hjust = 0)) +
+        plot.title      = element_text(size = 18, face = "bold"),
+        plot.subtitle   = element_text(size = 14,hjust = 0, color = "gray40"),
+        plot.caption    = element_text(size = 14,hjust = 0)) +
   scale_y_continuous(labels = scales::comma)
   
 if (mh == TRUE) {
   tmp_filename <- "cases_mh.pdf"
 } else {
-  cfr <- cfr %>% filter(place == "India")
+  # cfr <- cfr %>% filter(place == "India")
   tmp_filename <- "cases.pdf"
 }  
   
