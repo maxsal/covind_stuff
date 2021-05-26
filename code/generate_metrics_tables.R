@@ -289,7 +289,8 @@ India_gt_table = function() {
       Location == "National estimate" ~ "India",
       TRUE ~ Location)
       ) %>%
-    distinct()
+    distinct() %>%
+    drop_na(`# daily new cases`)
   
   message("making full table...")
   
@@ -351,7 +352,8 @@ India_gt_table = function() {
       source_note = md(glue(
         "**\uA9 COV-IND-19 Study Group**<br>**Source data:** covid19india.org<br>
       **Notes:** Cells highlighted in green indicates good performance for given metric while red indicates need for improvement.
-      Only states/union territories with the highest cumulative case counts as of {format(today, '%B %e')} are shown. 
+      Only states/union territories with the highest cumulative case counts as of {format(today, '%B %e')} are shown.
+      States are omitted if they have missing case count data.
       <br>
       **Abbrev:** CFR, Case-fatality rate."
       ))
@@ -481,7 +483,8 @@ India_gt_table = function() {
       source_note = md(glue(
         "**\uA9 COV-IND-19 Study Group**<br>**Source data:** covid19india.org<br>
       **Notes:** Cells highlighted in green indicates good performance for given metric while red indicates need for improvement.
-      Only states/union territories with the highest cumulative case counts as of {format(today, '%B %e')} are shown. 
+      Only states/union territories with the highest cumulative case counts as of {format(today, '%B %e')} are shown.
+      States are omitted if they have missing case count data.
       <br>
       **Abbrev:** CFR, Case-fatality rate."
       ))
@@ -584,7 +587,8 @@ India_gt_table = function() {
       source_note = md(glue(
         "**\uA9 COV-IND-19 Study Group**<br>**Source data:** covid19india.org<br>
       **Notes:** Cells highlighted in green indicates good performance for given metric while red indicates need for improvement.
-      Only states/union territories with the highest cumulative case counts as of {format(today, '%B %e')} are shown. 
+      Only states/union territories with the highest cumulative case counts as of {format(today, '%B %e')} are shown.
+      States are omitted if they have missing case count data.
       <br>
       **Abbrev:** CFR, Case-fatality rate."
       ))

@@ -7,7 +7,7 @@ library(janitor)
 library(glue)
 library(here)
 
-mh <- TRUE
+mh <- FALSE
 
 obs <- read_csv("https://api.covid19india.org/csv/latest/case_time_series.csv",
               col_types = cols()) %>%
@@ -48,6 +48,15 @@ for (i in seq_along(scenarios)) {
   }
   
 }
+
+if (mh == TRUE) {
+  tmp_filename <- "cases_mh.pdf"
+  tmp_title <- "Predicted number of daily COVID-19 cases using Maharashtra lockdown schedule"
+} else {
+  # cfr <- cfr %>% filter(place == "India")
+  tmp_filename <- "cases.pdf"
+  tmp_title <- "Predicted number of daily COVID-19 cases using India lockdown schedule"
+}  
 
 p <- p %>%
   mutate(
@@ -167,11 +176,11 @@ total.smoothed <- total %>%
 
 total.smoothed.plot <- total.smoothed %>% 
   filter(scenario == "No intervention") %>% 
-  filter(date < "2021-05-15") %>% 
+  filter(date <= "2021-05-15") %>% 
   mutate(scenario = "Observed") %>% 
-  add_row(total.smoothed %>% 
-            filter(scenario == "No intervention") %>% 
-            filter(date >= "2021-05-15")) %>%
+  # add_row(total.smoothed %>% 
+  #           filter(scenario == "No intervention") %>% 
+  #           filter(date >= "2021-05-15")) %>%
   add_row(total.smoothed %>% 
             filter(scenario == "March 15", 
                    date >= "2021-03-08")) %>% 
@@ -185,16 +194,15 @@ total.smoothed.plot <- total.smoothed %>%
             filter(scenario == "April 30", 
                    date >= "2021-04-21")) %>% 
   mutate(scenario = factor(scenario, levels = c("Observed", "March 15", "March 30", 
-                                                "April 15", "April 30", "No intervention")))%>%
-  filter(date <= "2021-05-31") 
+                                                "April 15", "April 30")))%>%
+  filter(date <= "2021-05-15") 
 
 
 cases.p <- total.smoothed.plot %>% 
-  filter(date >= "2021-02-15" & date <= "2021-05-31") %>%
+  filter(date >= "2021-02-15" & date <= "2021-05-15") %>%
   ggplot(aes(x = date, y = fitted)) + 
   geom_line(aes(color = scenario), size = 1) +
   scale_colour_lancet() + 
-  #theme_bw() + 
   xlab("Date") + 
   ylab("Daily cases") + 
   geom_vline(data = total.smoothed.plot %>% 
@@ -214,10 +222,11 @@ cases.p <- total.smoothed.plot %>%
                     aes(x = date, 
                         y = fitted, 
                         label = paste0(formatC(round(fitted), format="f", big.mark=",", digits=0), " cases"),
-                        color = scenario), 
-                   nudge_y = 50000, 
+                        color = scenario,
+                        family = "Lato"), 
+                   nudge_y = 75000, 
                    nudge_x = -10, 
-                   size = 5, 
+                   size = 4, 
                    show.legend  = FALSE, 
                    segment.size = 1) + 
   geom_text_repel(data = total.smoothed.plot %>% 
@@ -225,61 +234,44 @@ cases.p <- total.smoothed.plot %>%
                      filter(date == min(date)) %>% 
                      dplyr::ungroup() %>% 
                      select(scenario, date, fitted) %>% 
-                     mutate(text = c("Observed data", "No intervention", "Intervention  1", "Intervention  2", 
+                     mutate(text = c("Observed data", "Intervention  1", "Intervention  2", 
                                      "Intervention  3", "Intervention  4"), 
-                            x = as.Date(c("2021-03-01", "2021-05-14", "2021-03-08", "2021-03-23", "2021-04-06", "2021-04-16")), 
-                            y = c(-10000, 750000,750000,750000,750000,750000)), 
+                            x = as.Date(c("2021-03-01", "2021-03-08", "2021-03-23", "2021-04-06", "2021-04-21")), 
+                            y = c(30000, rep(500000, 4))), 
                    aes(x = x, 
                        y = y, 
                        label = text,
-                       color = scenario), 
+                       color = scenario,
+                       family = "Lato"), 
                    nudge_x = -1,
-                   size = 5, 
+                   size = 4, 
                    show.legend  = FALSE, 
                    segment.size = 1) + 
   guides(color = guide_legend(nrow = 1)) + 
-  annotate("text", 
-           x = as.Date("2021-05-02"), 
-           y = 430831, 
-           label = "Observed data till May 24, 2021.", 
-           size = 5, 
-           hjust = -0.1, 
-           fontface = "bold") + 
-  labs(title    = paste0("Predicted number of daily COVID-19 infections for different intervention dates."), 
-       subtitle = "Prediction period until May 31, 2021.\nFigures in boxes show peak number of cases for each intervention.",
-       y        = "Observed cases",
+  labs(title    = tmp_title, 
+       subtitle = "February 15, 2021 to May 15, 2021",
+       y        = "Daily cases",
        x        = "",
        color    = "Date of intervention",
-       caption  = "\uA9 COV-IND-19 Study Group") +
+       caption  = glue("**Notes:** Observations and prediction period until May 15, 2021. ",
+                       "Figures in boxes show peak number of cases for each intervention.<br>",
+                       "**\uA9 COV-IND-19 Study Group**")) +
+  scale_y_continuous(labels = scales::comma) +
+  scale_x_date(date_labels = "%B") +
   theme_classic() +
-  theme(axis.text.x     = element_text(angle = 45, vjust = 0.5, size = 14, face = "bold"),
-        axis.text.y     = element_text(size = 14, face = "bold"),
-        axis.title.x    = element_text(size = 14, face = "bold"),
-        axis.title.y    = element_text(size = 14, face = "bold"),
-        legend.title    = element_text(size = 14, face = "bold"),
-        legend.text     = element_text(size = 14, face = "bold"),
-        legend.position = "none",
-        plot.title      = element_text(size = 18, face = "bold"),
-        plot.subtitle   = element_text(size = 14,hjust = 0, color = "gray40"),
-        plot.caption    = element_text(size = 14,hjust = 0)) +
-  scale_y_continuous(labels = scales::comma)
+  theme(
+    text            = element_text(family = "Lato"),
+    axis.text.x     = element_text(size = 11, vjust = 0.5),
+    axis.text.y     = element_text(size = 11),
+    axis.title.x    = element_text(size = 11, face = "bold"),
+    axis.title.y    = element_text(size = 11, face = "bold"),
+    legend.title    = element_text(size = 11, face = "bold"),
+    legend.text     = element_text(size = 11, face = "bold"),
+    legend.position = "none",
+    plot.title      = element_text(size = 14, face = "bold"),
+    plot.subtitle   = element_text(size = 11, hjust = 0, color = "gray40"),
+    plot.caption    = element_markdown(size = 10, hjust = 0)
+  )
   
-if (mh == TRUE) {
-  tmp_filename <- "cases_mh.pdf"
-} else {
-  # cfr <- cfr %>% filter(place == "India")
-  tmp_filename <- "cases.pdf"
-}  
-  
-ggsave(here("lockdown", "fig", tmp_filename), plot = cases.p, height = 12, width = 18, units = "in")
-
-
-
-  
-  
-
-  
-    
-
-
-
+ggsave(here("lockdown", "fig", tmp_filename), plot = cases.p,
+       height = 5.5, width = 11, units = "in", device = cairo_pdf)

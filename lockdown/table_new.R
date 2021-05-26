@@ -10,7 +10,8 @@ library(anytime)
 library(zoo)
 options(stringsAsFactors = FALSE)
 
-mh <- FALSE
+mh <- TRUE
+kl <- TRUE
 
 d <- read_csv("https://api.covid19india.org/csv/latest/case_time_series.csv",
               col_types = cols()) %>%
@@ -20,15 +21,29 @@ d <- read_csv("https://api.covid19india.org/csv/latest/case_time_series.csv",
          total_cases = total_confirmed, total_deaths = total_deceased, 
          everything())
 
-if (mh == TRUE) {
+if (kl == TRUE) {
+  taco <- read_csv("https://api.covid19india.org/csv/latest/state_wise_daily.csv",
+                   col_types = cols()) %>%
+    clean_names() %>%
+    select(date = date_ymd, status, value = kl) %>%
+    pivot_wider(
+      names_from  = "status",
+      values_from = "value",
+      id_cols     = "date"
+    ) %>%
+    select(date, daily_cases = Confirmed, daily_deaths = Deceased) %>%
+    mutate(cfr = daily_deaths / daily_cases) %>%
+    mutate(cfr_t7 = zoo::rollmean(cfr, k = 7, fill = NA, align = "right"))
+  d <- d %>% left_join(taco %>% select(date, cfr, cfr_t7), by = "date")
+} else if (mh == TRUE) {
   taco <- read_csv("https://api.covid19india.org/csv/latest/state_wise_daily.csv",
                    col_types = cols()) %>%
     clean_names() %>%
     select(date = date_ymd, status, value = mh) %>%
     pivot_wider(
-      names_from = "status",
+      names_from  = "status",
       values_from = "value",
-      id_cols = "date"
+      id_cols     = "date"
     ) %>%
     select(date, daily_cases = Confirmed, daily_deaths = Deceased) %>%
     mutate(cfr = daily_deaths / daily_cases) %>%
@@ -72,9 +87,7 @@ dates <- as.Date(c(
   "2021-03-30",
   "2021-04-15",
   "2021-04-30",
-  "2021-05-15",
-  "2021-05-30",
-  "2021-06-15"
+  "2021-05-15"
 ))
 
 obs <- d %>%
@@ -174,9 +187,15 @@ for (i in 1:4) {
   table_deaths[[i+3]] <- tmp_a
 }
 
-if (mh == TRUE) {
+if (mh == TRUE & kl == FALSE) {
   case_out  <- here("lockdown", "output", "table_mh_cases.txt")
   death_out <- here("lockdown", "output", "table_mh_deaths.txt")
+} else if (mh == TRUE & kl == TRUE) {
+  case_out  <- here("lockdown", "output", "table_kl_mh_cases.txt")
+  death_out <- here("lockdown", "output", "table_kl_mh_deaths.txt")
+} else if (kl == TRUE) {
+  case_out  <- here("lockdown", "output", "table_kl_cases.txt")
+  death_out <- here("lockdown", "output", "table_kl_deaths.txt")
 } else {
   case_out  <- here("lockdown", "output", "table_cases.txt")
   death_out <- here("lockdown", "output", "table_deaths.txt")

@@ -6,8 +6,10 @@ library(ggrepel)
 library(janitor)
 library(glue)
 library(here)
+library(ggtext)
 
-mh <- FALSE
+mh <- TRUE
+kl <- TRUE
 
 obs <- read_csv("https://api.covid19india.org/csv/latest/case_time_series.csv",
                 col_types = cols()) %>%
@@ -74,15 +76,29 @@ d <- read_csv("https://api.covid19india.org/csv/latest/case_time_series.csv",
          everything()) %>%
   filter(date >= "2021-02-15")
 
-if (mh == TRUE) {
+if (kl == TRUE) {
+  taco <- read_csv("https://api.covid19india.org/csv/latest/state_wise_daily.csv",
+                   col_types = cols()) %>%
+    clean_names() %>%
+    select(date = date_ymd, status, value = kl) %>%
+    pivot_wider(
+      names_from  = "status",
+      values_from = "value",
+      id_cols     = "date"
+    ) %>%
+    select(date, daily_cases = Confirmed, daily_deaths = Deceased) %>%
+    mutate(cfr = daily_deaths / daily_cases) %>%
+    mutate(cfr_t7 = zoo::rollmean(cfr, k = 7, fill = NA, align = "right"))
+  d <- d %>% left_join(taco %>% select(date, cfr, cfr_t7), by = "date")
+} else if (mh == TRUE) {
   taco <- read_csv("https://api.covid19india.org/csv/latest/state_wise_daily.csv",
                    col_types = cols()) %>%
     clean_names() %>%
     select(date = date_ymd, status, value = mh) %>%
     pivot_wider(
-      names_from = "status",
+      names_from  = "status",
       values_from = "value",
-      id_cols = "date"
+      id_cols     = "date"
     ) %>%
     select(date, daily_cases = Confirmed, daily_deaths = Deceased) %>%
     mutate(cfr = daily_deaths / daily_cases) %>%
@@ -98,11 +114,31 @@ if (mh == TRUE) {
 #                 col_types = cols()) %>%
 #   select(place, date, period, cfr = smooth_cfr)
 
-if (mh == TRUE) {
+if (mh == TRUE & kl == TRUE) {
   # cfr <- cfr %>% filter(place == "Maharashtra")
+  tmp_title    <- "Predicted number of daily COVID-19 deaths using Maharashtra lockdown schedule"
+  tmp_subtitle <- "Using Kerala CFR schedule; February 15, 2021 to May 15, 2021"
+  tmp_repel_y  <- c(0, 4000, 4000, 4000, 4000)
+  tmp_nudge    <- 500
+  tmp_filename <- "deaths_kl_mh.pdf"
+} else if (mh == TRUE & kl == FALSE) {
+  tmp_title    <- "Predicted number of daily COVID-19 deaths using Maharashtra lockdown schedule"
+  tmp_subtitle <- "Using Maharashtra CFR schedule; February 15, 2021 to May 15, 2021"
+  tmp_repel_y  <- c(400, 9000, 9000, 9000, 9000)
+  tmp_nudge    <- 1000
   tmp_filename <- "deaths_mh.pdf"
+} else if (kl == TRUE) {
+  tmp_title    <- "Predicted number of daily COVID-19 deaths using India lockdown schedule"
+  tmp_subtitle <- "Using Kerala CFR schedule; February 15, 2021 to May 15, 2021"
+  tmp_repel_y  <- c(250, 4000, 4000, 4000, 4000)
+  tmp_nudge    <- 500
+  tmp_filename <- "deaths_kl.pdf"
 } else {
   # cfr <- cfr %>% filter(place == "India")
+  tmp_title    <- "Predicted number of daily COVID-19 deaths using India lockdown schedule"
+  tmp_subtitle <- "Using India CFR schedule; February 15, 2021 to May 15, 2021"
+  tmp_repel_y  <- c(250, 4000, 4000, 4000, 4000)
+  tmp_nudge    <- 500
   tmp_filename <- "deaths.pdf"
 }
 
@@ -202,16 +238,16 @@ total <- obs %>%
   add_row(apr.15) %>%
   add_row(apr.30) 
 
-ggplotly(total %>% 
-           filter(scenario != "March 1") %>%
-           nest(data = c(date, incidence)) %>% 
-           mutate(m = purrr::map(data, loess, formula = incidence ~ as.numeric(date), span = 0.5),
-                  fitted = purrr::map(m, `[[`, "fitted")) %>% 
-           select(-m) %>% 
-           unnest(cols = c(data, fitted)) %>% 
-           ggplot(aes(x = date, y = fitted)) + 
-           #geom_point() + 
-           geom_line(aes(colour = scenario)))
+# ggplotly(total %>% 
+#            filter(scenario != "March 1") %>%
+#            nest(data = c(date, incidence)) %>% 
+#            mutate(m = purrr::map(data, loess, formula = incidence ~ as.numeric(date), span = 0.5),
+#                   fitted = purrr::map(m, `[[`, "fitted")) %>% 
+#            select(-m) %>% 
+#            unnest(cols = c(data, fitted)) %>% 
+#            ggplot(aes(x = date, y = fitted)) + 
+#            #geom_point() + 
+#            geom_line(aes(colour = scenario)))
 
 total.smoothed <- total %>% 
   filter(scenario != "March 1") %>% 
@@ -225,7 +261,7 @@ total.smoothed <- total %>%
 
 total.smoothed.plot <- total.smoothed %>% 
   filter(scenario == "Observed") %>% 
-  filter(date <= "2021-05-31")  %>% 
+  filter(date <= "2021-05-15")  %>% 
   # add_row(total.smoothed %>% 
   #           filter(scenario == "No intervention") %>% 
   #           filter(date >= "2021-05-02")) %>%
@@ -237,21 +273,18 @@ total.smoothed.plot <- total.smoothed %>%
                    date >= "2021-03-24")) %>% 
   add_row(total.smoothed %>% 
             filter(scenario == "April 15", 
-                   date >= "2021-04-09")) %>% 
+                   date >= "2021-04-08")) %>% 
   add_row(total.smoothed %>% 
             filter(scenario == "April 30", 
                    date >= "2021-04-21")) %>% 
   mutate(scenario = factor(scenario, levels = c("Observed", "March 15", "March 30", 
                                                 "April 15", "April 30")))%>%
-  filter(date <= "2021-05-31") 
-
-
+  filter(date <= "2021-05-15") 
 
 deaths.p <- total.smoothed.plot %>% 
   ggplot(aes(x = date, y = fitted)) + 
   geom_line(aes(color = scenario), size = 1) +
   scale_colour_lancet() + 
-  #theme_bw() + 
   xlab("Date") + 
   ylab("Daily deaths") + 
   geom_vline(data = total.smoothed.plot %>% 
@@ -271,10 +304,11 @@ deaths.p <- total.smoothed.plot %>%
                    aes(x = date, 
                        y = fitted, 
                        label = paste0(formatC(round(fitted), format="f", big.mark=",", digits=0), " deaths"),
-                       color = scenario), 
-                   nudge_y = 500, 
+                       color = scenario,
+                       family = "Lato"), 
+                   nudge_y = tmp_nudge, 
                    nudge_x = -10, 
-                   size = 5, 
+                   size = 4,
                    show.legend  = FALSE, 
                    segment.size = 1) + 
   geom_text_repel(data = total.smoothed.plot %>% 
@@ -284,41 +318,51 @@ deaths.p <- total.smoothed.plot %>%
                     select(scenario, date, fitted) %>% 
                     mutate(text = c("Observed data", "Intervention  1", "Intervention  2", 
                                     "Intervention  3", "Intervention  4"), 
-                           x = as.Date(c("2021-03-01", "2021-03-10", "2021-03-25", "2021-04-10", "2021-04-19")), 
-                           y = c(0, 3500,3500,3500,3500)), 
+                           x = as.Date(c("2021-03-01", "2021-03-09", "2021-03-24", "2021-04-08", "2021-04-21")), 
+                           y = tmp_repel_y), 
                   aes(x = x, 
                       y = y, 
                       label = text,
-                      color = scenario), 
-                  nudge_x = -5,
-                  size = 5, 
+                      color = scenario,
+                      family = "Lato"), 
+                  nudge_x      = -5,
+                  size         = 4, 
                   show.legend  = FALSE, 
                   segment.size = 0) + 
   guides(color = guide_legend(nrow = 1)) + 
-  annotate("text", 
-           x = as.Date("2021-04-20"), 
-           y = 3750, 
-           label = "Observed data through\n May 15, 2021", 
-           size = 5, 
-           hjust = -0.1, 
-           fontface = "bold") + 
-  labs(title    = paste0("Predicted number of daily COVID-19 deaths for different intervention dates."), 
-       subtitle = "Observations and prediction period until May 15, 2021.\nFigures in boxes show peak number of deaths for each intervention.",
-       y        = "Observed deaths",
+  # annotate("text", 
+  #          x        = as.Date("2021-05-15"), 
+  #          y        = 2500, 
+  #          label    = "Observed data through\n May 15, 2021", 
+  #          size     = 4,
+  #          hjust    = 1, 
+  #          fontface = "bold",
+  #          family   = "Lato") + 
+  labs(title    = tmp_title,
+       subtitle = tmp_subtitle,
+       y        = "Daily deaths",
        x        = "",
        color    = "Date of intervention",
-       caption  = "\uA9 COV-IND-19 Study Group") +
+       caption  = glue("**Notes:** Observations and prediction period until May 15, 2021. ",
+                       "Figures in boxes show peak number of deaths for each intervention.<br>",
+                       "**Abbrev:** CFR, case-fatality rate<br>",
+                       "**\uA9 COV-IND-19 Study Group**")) +
   scale_y_continuous(labels = scales::comma) +
+  scale_x_date(date_labels = "%B") +
   theme_classic() +
-  theme(axis.text.x     = element_text(angle = 45, vjust = 0.5, size = 14, face = "bold"),
-        axis.text.y     = element_text(size = 14, face = "bold"),
-        axis.title.x    = element_text(size = 14, face = "bold"),
-        axis.title.y    = element_text(size = 14, face = "bold"),
-        legend.title    = element_text(size = 14, face = "bold"),
-        legend.text     = element_text(size = 14, face = "bold"),
-        legend.position = "none",
-        plot.title      = element_text(size = 18, face = "bold"),
-        plot.subtitle   = element_text(size = 14,hjust = 0, color = "gray40"),
-        plot.caption    = element_text(size = 14,hjust = 0))
+  theme(
+    text            = element_text(family = "Lato"),
+    axis.text.x     = element_text(size = 11, vjust = 0.5),
+    axis.text.y     = element_text(size = 11),
+    axis.title.x    = element_text(size = 11, face = "bold"),
+    axis.title.y    = element_text(size = 11, face = "bold"),
+    legend.title    = element_text(size = 11, face = "bold"),
+    legend.text     = element_text(size = 11, face = "bold"),
+    legend.position = "none",
+    plot.title      = element_text(size = 14, face = "bold"),
+    plot.subtitle   = element_text(size = 11, hjust = 0, color = "gray40"),
+    plot.caption    = element_markdown(size = 10, hjust = 0)
+    )
 
-ggsave(here("lockdown", "fig", tmp_filename), plot = deaths.p, height = 12, width = 18, units = "in")
+ggsave(here("lockdown", "fig", tmp_filename), plot = deaths.p, 
+       height = 5.5, width = 11, units = "in", device = cairo_pdf)
