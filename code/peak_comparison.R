@@ -277,27 +277,3 @@ tib %>%
     align = c("left"),
     columns = c(Stats)
   )
-
-d %>%
-  dplyr::filter(date >= "2020-03-24") %>%
-  ggplot(aes(x = date, y = r_est)) +
-  geom_hline(yintercept = 1, linetype = 2, color = "#FF9933") +
-  geom_ribbon(aes(ymin = r_lower, ymax = r_upper), fill = "#138808", alpha = 0.5) +
-  geom_line(size = 1, color = "#138808") +
-  geom_point(shape = 3, size = 0.5) +
-  labs(
-    title    = "Time-varying R estimate in India",
-    subtitle = glue("from March 24, 2020 to {format(max(d$date), '%B %e, %Y')}"),
-    x        = "Date",
-    y        =  "R(t)",
-    caption  = glue("**Sources:** covid19india.org; covind19.org<br>",
-                    "**\uA9 COVI-IND-19 Study Group**")
-  ) +
-  theme_classic() +
-  theme(
-    text          = element_text(family = "Lato"),
-    plot.title    = element_text(hjust = 0, face = "bold"),
-    plot.subtitle = element_text(hjust = 0, color = "gray40"),
-    plot.caption  = element_markdown(hjust = 0)
-  )
-ggsave(here("fig", glue("r_est_india_plot_{Sys.Date()}.pdf")), width = 7, height = 5, device = cairo_pdf)
