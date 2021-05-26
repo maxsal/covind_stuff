@@ -20,7 +20,8 @@ dat <- count_dat %>%
     tpr_change   = (daily_tpr   - dplyr::lag(daily_tpr, n_lag)) / dplyr::lag(daily_tpr, n_lag),
     cases_change = (daily_cases - dplyr::lag(daily_cases, n_lag)) / dplyr::lag(daily_cases, n_lag)
   ) %>%
-  ungroup()
+  ungroup() %>%
+  filter(date <= today)
 
 abbrevs <- unique(dat$abbrev)
 
@@ -34,7 +35,7 @@ for (i in seq_along(abbrevs)) {
   tmp_place <- d %>% pull(place) %>% unique()
 
   coeff_d <- .25 / d %>% dplyr::filter(date >= (today - 30)) %>% pull(daily_tests) %>% max(., na.rm = T)
-  tpr_d_mag <- d %>% dplyr::filter(date == "2021-04-20") %>% pull(daily_tpr)
+  tpr_d_mag <- d %>% dplyr::filter(date == (today - 7)) %>% pull(daily_tpr)
 
   bar_plt <- d %>%
     dplyr::filter(date >= (today - 30)) %>%
@@ -42,9 +43,9 @@ for (i in seq_along(abbrevs)) {
     geom_bar(aes(y = daily_tests), stat = "identity", fill = "#FF9933", alpha = 0.5) +
     geom_bar(aes(y = daily_cases), stat = "identity", fill = "#138808") +
     geom_line(aes(y = daily_tpr / coeff_d), size = 1) +
-    annotate("segment", x = as.Date("2021-04-20"), xend = as.Date("2021-04-20"), y = tpr_d_mag / coeff_d, yend = 0.125 / coeff_d) +
+    annotate("segment", x = today - 7, xend = today - 7, y = tpr_d_mag / coeff_d, yend = 0.08 / coeff_d) +
     annotate("label", label = "Test-positive rate",
-             x = as.Date("2021-04-20"), y = 0.13 / coeff_d, alpha = 0.8) +
+             x = today - 7, y = 0.075 / coeff_d, alpha = 0.8) +
     labs(
       title   = glue("COVID-19: <b style='color:#138808'>Daily cases</b> and <b style='color:#FF9933'>daily tests</b> in {tmp_place}"),
       subtitle = glue("{format(today - 30, '%B %e, %Y')} to {format(today, '%B %e, %Y')}"),
