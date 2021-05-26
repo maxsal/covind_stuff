@@ -25,6 +25,8 @@ dat <- count_dat %>%
 
 abbrevs <- unique(dat$abbrev)
 
+options(warn = -1)
+
 for (i in seq_along(abbrevs)) {
   
   message(glue("plotting {abbrevs[i]} [{i}/{length(abbrevs)} ({round(i*100/length(abbrevs))}%)]..."))
@@ -113,6 +115,8 @@ for (i in seq_along(abbrevs)) {
   
   
 }
+
+options(warn = 1)
 
 system("git status")
 system("git add .")

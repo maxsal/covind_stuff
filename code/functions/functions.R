@@ -1,5 +1,5 @@
 # get count data ----------
-get_count_data <- function(d, top_n = FALSE, abbrevs = NULL) {
+get_count_data <- function(top_n = FALSE, abbrevs = NULL) {
     
     message("getting count data...")
     
@@ -79,7 +79,7 @@ get_count_data <- function(d, top_n = FALSE, abbrevs = NULL) {
 }
 
 # get testing data ----------
-get_testing_data <- function(d) {
+get_testing_data <- function() {
     
     message("getting testing data...")
     
@@ -161,10 +161,10 @@ merge_data <- function(count, test, tpr_d = 0.02) {
 }
 
 # do it all ----------
-do_it_all <- function(d) {
+do_it_all <- function() {
     
-    count_dat <- get_count_data(d = d)
-    test_dat  <- get_testing_data(d = d)
+    count_dat <- get_count_data()
+    test_dat  <- get_testing_data()
     merge_dat <- merge_data(count = count_dat, test = test_dat) 
     # %>%
     #     get_dbl()
@@ -447,279 +447,131 @@ vax <- read_csv("https://api.covid19india.org/csv/latest/cowin_vaccine_data_stat
                 col_types = cols()) %>%
     clean_names()
 
+# extract latest values for metrics table -----------
+extract_latest <- function(data, group = place, cols = c("total_tests", "tpr", "dbl", "ppt")) {
+  out <- data %>%
+    group_by({{ group }}) %>%
+    filter(date == max(date)) %>%
+    distinct(date, .keep_all = TRUE) %>%
+    ungroup() %>%
+    select({{ group }}, date, all_of(cols))
+  if ("India" %in% data[[paste0(substitute(group))]]) {
+    out[[paste0(substitute(group))]] <- recode(out[[paste0(substitute(group))]],
+                                               "India" = "National estimate")
+  }
+  return(out)
+}
+
 ### make metrics tables ----------
-India_gt_table = function() {
+get_metrics_tables <- function() {
     
     message("prepping...")
-    
-    tp    <- dat
-    cfr1  <- cfr
-    r_est <- r0_est
-    
+  
+    today           <- Sys.Date() - 1
+    tp              <- dat
+    cfr1            <- cfr
+    r_est           <- r0_est
     india_state_pop <- readr::read_csv("https://raw.githubusercontent.com/umich-cphds/cov-ind-19/master/model/populations.csv", col_types = cols()) %>%
         dplyr::rename(place = full)
     
-    #   india_state_pop = '"state" "population"
-    # "1" "Uttar Pradesh" 199812341
-    # "2" "Maharashtra" 112374333
-    # "3" "Bihar" 104099452
-    # "4" "West Bengal" 91276115
-    # "5" "Madhya Pradesh" 72626809
-    # "6" "Tamil Nadu" 72147030
-    # "7" "Rajasthan" 68548437
-    # "8" "Karnataka" 61095297
-    # "9" "Gujarat" 60439692
-    # "10" "Andhra Pradesh" 49577103
-    # "11" "Odisha" 41974219
-    # "12" "Telangana" 35003674
-    # "13" "Kerala" 33406061
-    # "14" "Jharkhand" 32988134
-    # "15" "Assam" 31205576
-    # "16" "Punjab" 27743338
-    # "17" "Chhattisgarh" 25545198
-    # "18" "Haryana" 25351462
-    # "19" "Delhi" 16787941
-    # "20" "Jammu and Kashmir" 12267032
-    # "21" "National estimate" 1210569573'
-    #   
-    #   india_state_pop = read.table(text = india_state_pop, col.names = c("state", "population"),
-    #                                stringsAsFactors = FALSE)
-    
-    # shortfall -----------
+    # pull abbrevs -----------
     use_abbrevs <- tp %>% filter(abbrev != "la") %>% pull(abbrev) %>% unique() %>% tolower()
     
     # state data ----------
-    
-    today = Sys.Date()
+    vax_dat <- readr::read_csv("http://api.covid19india.org/csv/latest/cowin_vaccine_data_statewise.csv",
+                                col_types = cols()) %>%
+      janitor::clean_names() %>%
+      dplyr::mutate(updated_on = as.Date(updated_on, format = "%d/%m/%Y")) %>%
+      dplyr::select(date = updated_on, state,
+                    second_dose = second_dose_administered,
+                    total_vax = total_individuals_vaccinated,
+                    total_vax_doses = total_doses_administered) %>%
+      dplyr::mutate(daily_vax_dose = total_vax_doses - dplyr::lag(total_vax_doses)) %>%
+      tidyr::drop_na() %>%
+      dplyr::filter(date == max(date)) %>%
+      dplyr::left_join(india_state_pop, c("state" = "place")) %>% 
+      dplyr::mutate(
+        pct_at_least_one = round((total_vax/population)*100, 2),
+        pct_second = round((second_dose/population)*100, 2)
+      ) %>% 
+      dplyr::select(-population) %>%
+      dplyr::mutate(state = ifelse(state == "India", "National estimate", state))
     
     sf <- tp %>%
-        dplyr::group_by(place) %>%
-        dplyr::filter(date > max(as.Date(date)) - 7) %>%
+      dplyr::group_by(place) %>%
+      dplyr::filter(date > max(as.Date(date)) - 7) %>%
       dplyr::mutate(
         dailyTPR7 = daily_cases/daily_tests,
         dailyCFR7 = daily_deaths/daily_cases
-        ) %>%
-      filter(is.finite(dailyTPR7)) %>%
-        mutate(dailyTPR7d = mean(dailyTPR7, na.rm = T),
-               dailyCFR7d = mean(dailyCFR7, na.rm = T)) %>%
-        dplyr::filter(date == max(as.Date(date))) %>%
-        distinct(date, .keep_all = TRUE) %>%
-        ungroup() %>%
-        dplyr::select(place, total_tests, ppt, shortfall, dailyTPR7d, dailyCFR7d, daily_cases, 
-                      daily_deaths, daily_tests, cases, deaths) %>%
-        mutate(
-            place = case_when(
-                place == "India" ~ "National estimate",
-                TRUE ~ place
-            ),
-            shortfall = trimws(format(round(shortfall), big.mark = ",")),
-            total_tested = trimws(format(total_tests, big.mark = ",")),
-            ppt = round(ppt * 100, digits = 2) 
-        ) 
-    
-    sf <- sf %>% left_join(india_state_pop, by = c("place"))
-    
-    vax_dat <- suppressMessages(vroom("http://api.covid19india.org/csv/latest/vaccine_doses_statewise.csv")) %>%
-        pivot_longer(
-            names_to = "date",
-            values_to = "vaccines",
-            -State
-        ) %>%
-        mutate(
-            date = as.Date(date, format = "%d/%m/%Y")
-        ) %>%
-        dplyr::rename(
-            state = State
-        ) %>%
-        group_by(state) %>%
-        drop_na(state) %>%
-        arrange(date) %>%
-        mutate(
-            daily_vaccines = vaccines - dplyr::lag(vaccines)
-        ) %>%
-        ungroup() %>% 
-        filter(date == max(date, na.rm = TRUE)) %>%
-        mutate(state = ifelse(state == "Total", "National estimate", state))
-    
-    sf <- sf %>% left_join(vax_dat, by = c("place" = "state"))
-    
-    # # pull forecast estimates ----------
-    # # no_int
-    # for (i in seq_along(use_abbrevs)) {
-    #   eval(parse(text = glue("{use_abbrevs[i]} <- read_tsv('{data_repo}/{today}/1wk/{use_abbrevs[i]}_no_int_data.txt', col_types = cols()) %>% filter(date == '{today + 21}') %>% add_column(abbrev = use_abbrevs[i])")))
-    # }
-    # 
-    # no_int_india <- read_tsv(paste0(data_repo, "/", glue("{today}/1wk/india_no_int_data.txt")), col_types = cols()) %>% filter(date == today + 21) %>% add_column(abbrev = "India")
-    # 
-    # eval(parse(text = glue("no_int_est <- bind_rows({paste0(use_abbrevs, collapse = ', ')}, no_int_india)")))
-    # no_int_est <- no_int_est %>%
-    #   left_join(
-    #     tp %>%
-    #       dplyr::select(abbrev, place), by = "abbrev") %>%
-    #   distinct() %>%
-    #   mutate(
-    #     name = case_when(
-    #       abbrev == "India" ~ "National estimate",
-    #       abbrev != "India" ~ place)
-    #   ) %>%
-    #   mutate(
-    #     no_int = value
-    #   ) %>%
-    #   dplyr::select(name, no_int)
-    
-    
-    extract_latest <- function(data, group = place, cols = c("total_tests", "tpr", "dbl", "ppt")) {
-        out <- data %>%
-            group_by({{ group }}) %>%
-            filter(date == max(date)) %>%
-            distinct(date, .keep_all = TRUE) %>%
-            ungroup() %>%
-            select({{ group }}, date, all_of(cols))
-        if ("India" %in% data[[paste0(substitute(group))]]) {
-            out[[paste0(substitute(group))]] <- recode(out[[paste0(substitute(group))]],
-                                                       "India" = "National estimate")
-        }
-        return(out)
-    }
-    tp %>% extract_latest(cols = c("total_tests", "tpr", "ppt"))
-    
-    # tp <- read_csv(paste0(data_repo, "/", today, "/everything.csv"), col_types = cols())
-    
-    # #use_abbrevs <- tp %>% pull(abbrev) %>% unique() %>% tolower()
-    # today = as.Date(today)
-    # for (i in seq_along(use_abbrevs)) {
-    #   eval(parse(text = glue("{use_abbrevs[i]} <- read_tsv('{data_repo}/{today}/1wk/{use_abbrevs[i]}_no_int_data.txt', col_types = cols()) %>% add_column(abbrev = use_abbrevs[i])")))
-    # }
-    # 
-    # no_int_india <- read_tsv(paste0(data_repo, "/", glue("{today}/1wk/india_no_int_data.txt")), col_types = cols()) %>% add_column(abbrev = "India")
-    # eval(parse(text = glue("no_int_est <- bind_rows({paste0(use_abbrevs, collapse = ', ')}, no_int_india)")))
-    # 
-    # no_int_est <- no_int_est %>%
-    #   left_join(
-    #     tp %>%
-    #       dplyr::select(abbrev, place), by = "abbrev") %>%
-    #   distinct() %>%
-    #   mutate(
-    #     name = case_when(
-    #       abbrev == "India" ~ "National estimate",
-    #       abbrev != "India" ~ place)
-    #   ) %>%
-    #   rename(
-    #     no_int = value
-    #   ) %>%
-    #   #dplyr::select(name, no_int) %>% 
-    #   group_by(name) %>% 
-    #   arrange(date) %>% 
-    #   mutate(no_int_daily = format(no_int - dplyr::lag(no_int), big.mark = ",")) %>%
-    #   filter(date == today + 21)
-    # 
-    # no_int_est
-    # end new
-    
-    # india_state_pop[india_state_pop$state == "National estimate",1] = "India"
-    vax_data <- read_csv("http://api.covid19india.org/csv/latest/cowin_vaccine_data_statewise.csv",
-                         col_types = cols()) %>%
-        clean_names() %>%
-        mutate(updated_on = as.Date(updated_on, format = "%d/%m/%Y")) %>%
-        select(date = updated_on, state,
-               second_dose = second_dose_administered,
-               total_vax = total_individuals_vaccinated,
-               total_vax_doses = total_doses_administered) %>%
-        mutate(daily_vax_dose = total_vax_doses - dplyr::lag(total_vax_doses)) %>%
-        drop_na() %>%
-        filter(date == max(date)) %>%
-        left_join(india_state_pop, c("state" = "place")) %>% 
-        mutate(
-            pct_at_least_one = round((total_vax/population)*100, 2),
-            pct_second = round((second_dose/population)*100, 2)
-        ) %>% 
-        select(-population)
-    vax_data[vax_data$state == "India", 2] = "National estimate"
-    
-    # quick_correct <- function(x, a = 0.95) {
-    #   
-    #   tmp_x <- x %>%
-    #     mutate(
-    #       `Predicted total cases` = as.numeric(gsub(",", "", trimws(`Predicted total cases`))),
-    #       `Daily new cases` = as.numeric(gsub(",", "", trimws(`Daily new cases`)))
-    #     )
-    #   tmp_nat   <- tmp_x %>% filter(Location == "National estimate")
-    #   tmp_state <- tmp_x %>% filter(Location != "National estimate")
-    #   tmp_nat_daily <- tmp_nat %>% pull(`Daily new cases`)
-    #   tmp_nat_total <- tmp_nat %>% pull(`Predicted total cases`)
-    #   tmp_state %<>%
-    #     mutate(
-    #       `Predicted total cases` = round(a * (`Predicted total cases` / sum(`Predicted total cases`)) * tmp_nat_total),
-    #       `Daily new cases`       = round(a * (`Daily new cases` / sum(`Daily new cases`)) * tmp_nat_daily)
-    #     )
-    #   tmp_nat %<>%
-    #     mutate(
-    #       Location = "India"
-    #     )
-    #   bind_rows(tmp_nat, tmp_state) %>%
-    #     mutate(
-    #       `Predicted total cases` = format(`Predicted total cases`, big.mark = ","),
-    #       `Daily new cases`       = format(`Daily new cases`, big.mark = ",")
-    #     )
-    # }
+      ) %>%
+      dplyr::filter(is.finite(dailyTPR7)) %>%
+      dplyr::mutate(dailyTPR7d = mean(dailyTPR7, na.rm = T),
+                    dailyCFR7d = mean(dailyCFR7, na.rm = T)) %>%
+      dplyr::filter(date == max(as.Date(date))) %>%
+      distinct(date, .keep_all = TRUE) %>%
+      ungroup() %>%
+      dplyr::select(place, total_tests, ppt, shortfall, dailyTPR7d, dailyCFR7d,
+                    daily_cases, daily_deaths, daily_tests, cases, deaths) %>%
+      mutate(
+        place = case_when(
+          place == "India" ~ "National estimate",
+          TRUE ~ place
+        ),
+        shortfall    = trimws(format(round(shortfall), big.mark = ",")),
+        total_tested = trimws(format(total_tests, big.mark = ",")),
+        ppt          = round(ppt * 100, digits = 2) 
+      ) %>%
+      left_join(india_state_pop, by = c("place")) %>%
+      left_join(vax_dat, by = c("place" = "state"))
     
     # table ----------
     tib <- cfr1 %>%
-        distinct(place, .keep_all = TRUE) %>%
-        left_join(r_est %>% mutate(place = recode(place, "India" = "National estimate")), by = c("place")) %>%
-        left_join(tp %>% extract_latest(cols = c("tpr")), by = c("place")) %>%
-        left_join(sf, by = c("place")) %>%
-        # left_join(no_int_est, by = c("place" = "name")) %>%
-        left_join(vax_data, by = c("place" = "state")) %>% 
-        mutate(perc_vaccine   = 100 * vaccines / population,
-               total_vacc     = format(vaccines, big.mark = ","),
-               daily_vaccines = format(daily_vaccines, big.mark = ","),
-               daily_cases = format(daily_cases, big.mark = ","),
-               daily_deaths = format(daily_deaths, big.mark = ","),
-               daily_tests = format(daily_tests, big.mark = ","),
-               daily_vax_dose = format(daily_vax_dose, big.mark = ","),
-               cases = format(cases, big.mark = ","),
-               deaths = format(deaths, big.mark = ",")) %>% 
-        rename(
-            `# daily new cases`              = daily_cases,
-            `# daily new deaths`             = daily_deaths,
-            `7-day average daily TPR`        = dailyTPR7d,
-            `7-day average daily CFR`        = dailyCFR7d,
-            R                                = r,
-            `daily tests`                    = daily_tests,
-            `daily vaccine doses`            = daily_vax_dose,
-            Location                         = place,
-            CFR                              = cfr,
-            #`Doubling time (days)`            = dbl,
-            `total cases`                    = cases,
-            `total deaths`                   = deaths,
-            `TPR`                            = tpr,
-            `Total tested`                   = total_tested,
-            #`PPT (%)`                       = ppt,
-            `Testing shortfall`              = shortfall,
-            #`No intervention`                 = no_int,
-            # `Daily new cases`                = no_int_daily,
-            # `Predicted total cases`          = no_int,
-            `Percent with at least one dose` = perc_vaccine,
-            `Total doses`                    = total_vacc,
-            #`Daily vaccinated`                = daily_vaccines,
-            `% pop. with two shots`          = pct_second,
-            `% pop. with at least one shot`  = pct_at_least_one
-        ) %>%
-        arrange(desc(`total cases`)) %>%
-        mutate(
-            `Testing shortfall`       = trimws(`Testing shortfall`),
-            # `Predicted total cases`   = trimws(format(`Predicted total cases`, big.mark = ",")),
-            `7-day average daily CFR` = round(`7-day average daily CFR`, digits = 3)
-        ) %>%
-        dplyr::select(`# daily new cases`, `# daily new deaths`, `7-day average daily TPR`,
-                      `7-day average daily CFR`,
-                      Location, R, `daily tests`, `daily vaccine doses`, 
-                      CFR, `Total tested`, `total cases`, `total deaths`, 
-                      # `Daily new cases`, 
-                      `Total doses`, `TPR`, 
-                      # `Predicted total cases`,
-                      `% pop. with two shots`, `% pop. with at least one shot`)
+      dplyr::distinct(place, .keep_all = TRUE) %>%
+      dplyr::left_join(r_est %>%
+                         mutate(place = recode(place, "India" = "National estimate")),
+                       by = c("place")) %>%
+      dplyr::left_join(tp %>%
+                         extract_latest(cols = c("tpr")),
+                       by = c("place")) %>%
+      dplyr::left_join(sf, by = c("place")) %>%
+      dplyr::mutate(perc_vaccine   = pct_at_least_one,
+                    total_vacc     = format(total_vax, big.mark = ","),
+                    daily_cases    = format(daily_cases, big.mark = ","),
+                    daily_deaths   = format(daily_deaths, big.mark = ","),
+                    daily_tests    = format(daily_tests, big.mark = ","),
+                    daily_vax_dose = format(daily_vax_dose, big.mark = ","),
+                    cases          = format(cases, big.mark = ","),
+                    deaths         = format(deaths, big.mark = ",")) %>% 
+      dplyr::rename(
+        `# daily new cases`              = daily_cases,
+        `# daily new deaths`             = daily_deaths,
+        `7-day average daily TPR`        = dailyTPR7d,
+        `7-day average daily CFR`        = dailyCFR7d,
+        R                                = r,
+        `daily tests`                    = daily_tests,
+        `daily vaccine doses`            = daily_vax_dose,
+        Location                         = place,
+        CFR                              = cfr,
+        `total cases`                    = cases,
+        `total deaths`                   = deaths,
+        `TPR`                            = tpr,
+        `Total tested`                   = total_tested,
+        `Testing shortfall`              = shortfall,
+        `Percent with at least one dose` = perc_vaccine,
+        `Total doses`                    = total_vacc,
+        `% pop. with two shots`          = pct_second,
+        `% pop. with at least one shot`  = pct_at_least_one
+      ) %>%
+      arrange(desc(`total cases`)) %>%
+      mutate(
+        `Testing shortfall`       = trimws(`Testing shortfall`),
+        `7-day average daily CFR` = round(`7-day average daily CFR`, digits = 3)
+      ) %>%
+      dplyr::select(`# daily new cases`, `# daily new deaths`, `7-day average daily TPR`,
+                    `7-day average daily CFR`, Location, R, `daily tests`,
+                    `daily vaccine doses`, CFR, `Total tested`, `total cases`,
+                    `total deaths`, `Total doses`, `TPR`,`% pop. with two shots`,
+                    `% pop. with at least one shot`)
     
     tib <- tib %>%
         select(-`Total tested`) %>% 
@@ -727,9 +579,21 @@ India_gt_table = function() {
             Location == "National estimate" ~ "India",
             TRUE ~ Location)
         ) %>%
-        distinct()
+        distinct() %>%
+        mutate_if(is.character, trimws) %>%
+        drop_na(`# daily new cases`) %>%
+        dplyr::filter(`# daily new cases` != "NA")
     
     message("making full table...")
+    
+    source_note_text <- glue(
+      "**\uA9 COV-IND-19 Study Group**<br>**Source data:** covid19india.org<br>
+      **Notes:** Cells highlighted in green indicates good performance for given metric while red indicates need for improvement.
+      Only states/union territories with the highest cumulative case counts as of {format(today, '%B %e')} are shown. 
+      States are omitted if they have missing case count data.
+      <br>
+      **Abbrev:** CFR, Case-fatality rate."
+    )
     
     tabl <- tib %>%
         gt() %>%
@@ -786,13 +650,7 @@ India_gt_table = function() {
         ) %>%
         # caption
         tab_source_note(
-            source_note = md(glue(
-                "**\uA9 COV-IND-19 Study Group**<br>**Source data:** covid19india.org<br>
-      **Notes:** Cells highlighted in green indicates good performance for given metric while red indicates need for improvement.
-      Only states/union territories with the highest cumulative case counts as of {format(today, '%B %e')} are shown. 
-      <br>
-      **Abbrev:** CFR, Case-fatality rate."
-            ))
+            source_note = md(source_note_text)
         ) %>% 
         # add and format column spanners
         tab_spanner(
@@ -805,10 +663,6 @@ India_gt_table = function() {
             columns = c(`total cases`, `total deaths`, `TPR`, CFR, 
                         `Total doses`, `% pop. with two shots`, `% pop. with at least one shot`)
         ) %>% 
-        # tab_spanner(
-        #   label   = glue("On ({format(today + 21, '%m/%d')})"),
-        #   columns = (`Predicted total cases`)
-        # ) %>% 
         cols_move_to_start((Location)) %>%
         tab_style(
             style = cell_text(
@@ -916,13 +770,7 @@ India_gt_table = function() {
         ) %>%
         # caption
         tab_source_note(
-            source_note = md(glue(
-                "**\uA9 COV-IND-19 Study Group**<br>**Source data:** covid19india.org<br>
-      **Notes:** Cells highlighted in green indicates good performance for given metric while red indicates need for improvement.
-      Only states/union territories with the highest cumulative case counts as of {format(today, '%B %e')} are shown. 
-      <br>
-      **Abbrev:** CFR, Case-fatality rate."
-            ))
+            source_note = md(source_note_text)
         ) %>% 
         tab_spanner(
             label   = "Point in time metrics",
@@ -1019,23 +867,13 @@ India_gt_table = function() {
         ) %>%
         # caption
         tab_source_note(
-            source_note = md(glue(
-                "**\uA9 COV-IND-19 Study Group**<br>**Source data:** covid19india.org<br>
-      **Notes:** Cells highlighted in green indicates good performance for given metric while red indicates need for improvement.
-      Only states/union territories with the highest cumulative case counts as of {format(today, '%B %e')} are shown. 
-      <br>
-      **Abbrev:** CFR, Case-fatality rate."
-            ))
+            source_note = md(source_note_text)
         ) %>% 
         tab_spanner(
             label   = "Cumulative metrics",
             columns = c(`total cases`, `total deaths`, `TPR`, CFR,
                         `Total doses`, `% pop. with two shots`, `% pop. with at least one shot`)
         ) %>% 
-        # tab_spanner(
-        #   label   = glue("On ({format(today + 21, '%m/%d')})"),
-        #   columns = c(`Predicted total cases`)
-        # ) %>% 
         cols_move_to_start((Location)) %>%
         tab_style(
             style = cell_text(
