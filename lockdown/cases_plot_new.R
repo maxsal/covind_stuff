@@ -1,3 +1,4 @@
+# libraries ----------
 library(tidyverse)
 library(plotly)
 library(lubridate)
@@ -6,9 +7,13 @@ library(ggrepel)
 library(janitor)
 library(glue)
 library(here)
+library(ggtext)
+source(here("lockdown", "extract_cfr.R"))
 
+# use maharashtra pi schedule? ------------
 mh <- FALSE
 
+# load data ----------
 obs <- read_csv("https://api.covid19india.org/csv/latest/case_time_series.csv",
               col_types = cols()) %>%
   clean_names() %>%
@@ -21,7 +26,6 @@ obs <- read_csv("https://api.covid19india.org/csv/latest/case_time_series.csv",
   select(-date) %>%
   rename(date = date_ymd) %>%
   filter(date >= "2021-02-15")
-# obs <- read_tsv("observed_data.txt")
 
 scenarios <- c("2021-03-01", "2021-03-15", "2021-03-30",
                "2021-04-15", "2021-04-30", "no_intervention")
@@ -72,77 +76,13 @@ p <- p %>%
     )
   )
 
-# mar <- read_tsv("march25_smooth_forecast.txt")
-
-# [1] "March 1"         "March 15"        "March 30"        "April 15"        "April 25"       
-# [6] "No intervention"
-
-## no intervention ----------
-none <- obs %>% 
-  filter(date <= "2021-05-15") %>% 
-  select(date, daily_cases) %>% 
-  rename(incidence = daily_cases) %>% 
-  add_row(p %>%  
-            filter(scenario == "No intervention" & date > "2021-05-15") %>% 
-            select(date, incidence) %>% 
-            drop_na()) %>% 
-  add_column(scenario = "No intervention")
-
-
-## march 1 ----------
-mar_01 <- obs %>% 
-  filter(date <= "2021-03-01") %>% 
-  select(date, daily_cases) %>% 
-  rename(incidence = daily_cases) %>% 
-  add_row(p %>%  
-            filter(scenario == "March 1") %>% 
-            select(date, incidence) %>% 
-            drop_na()) %>% 
-  add_column(scenario = "March 1")
-
-## march 15 ----------
-mar_15 <- obs %>% 
-  filter(date <= "2021-03-15") %>% 
-  select(date, daily_cases) %>% 
-  rename(incidence = daily_cases) %>% 
-  add_row(p %>%  
-            filter(scenario == "March 15") %>% 
-            select(date, incidence) %>% 
-            drop_na()) %>% 
-  add_column(scenario = "March 15")
-
-## march 30 ----------
-mar_30 <- obs %>% 
-  filter(date <= "2021-03-30") %>% 
-  select(date, daily_cases) %>% 
-  rename(incidence = daily_cases) %>% 
-  add_row(p %>%  
-            filter(scenario == "March 30") %>% 
-            select(date, incidence) %>% 
-            drop_na()) %>% 
-  add_column(scenario = "March 30")
-
-## april 15 ----------
-apr_15 <- obs %>% 
-  filter(date <= "2021-04-15") %>% 
-  select(date, daily_cases) %>% 
-  rename(incidence = daily_cases) %>% 
-  add_row(p %>%  
-            filter(scenario == "April 15") %>% 
-            select(date, incidence) %>% 
-            drop_na()) %>% 
-  add_column(scenario = "April 15")
-
-## april 30 ----------
-apr_30 <- obs %>% 
-  filter(date <= "2021-04-30") %>% 
-  select(date, daily_cases) %>% 
-  rename(incidence = daily_cases) %>% 
-  add_row(p %>%  
-            filter(scenario == "April 30") %>% 
-            select(date, incidence) %>% 
-            drop_na()) %>% 
-  add_column(scenario = "April 30")
+# prepare data ----------
+none   <- obs %>% clean_scenario(p = p, stop_obs = "2021-05-15", scen = "No intervention")
+mar_01 <- obs %>% clean_scenario(p = p, stop_obs = "2021-03-01", scen = "March 1")
+mar_15 <- obs %>% clean_scenario(p = p, stop_obs = "2021-03-15", scen = "March 15")
+mar_30 <- obs %>% clean_scenario(p = p, stop_obs = "2021-03-30", scen = "March 30")
+apr_15 <- obs %>% clean_scenario(p = p, stop_obs = "2021-04-15", scen = "April 15")
+apr_30 <- obs %>% clean_scenario(p = p, stop_obs = "2021-04-30", scen = "April 30")
 
 total <- none %>% 
   add_row(mar_01) %>% 
@@ -150,19 +90,6 @@ total <- none %>%
   add_row(mar_30) %>% 
   add_row(apr_15) %>%
   add_row(apr_30) 
-
-ggplotly(total %>% 
-  filter(scenario != "March 1") %>% 
-  filter(date <= "2021-05-31") %>% 
-  nest(data = c(date, incidence)) %>% 
-  mutate(m = purrr::map(data, loess, formula = incidence ~ as.numeric(date), span = 0.5),
-         fitted = purrr::map(m, `[[`, "fitted")) %>% 
-  select(-m) %>% 
-  unnest(cols = c(data, fitted)) %>% 
-  ggplot(aes(x = date, y = fitted)) + 
-  #geom_point() + 
-  geom_line(aes(colour = scenario)))
-
 
 total.smoothed <- total %>% 
   filter(scenario != "March 1") %>% 
@@ -173,14 +100,10 @@ total.smoothed <- total %>%
   select(-m) %>% 
   unnest(cols = c(data, fitted))
 
-
 total.smoothed.plot <- total.smoothed %>% 
   filter(scenario == "No intervention") %>% 
   filter(date <= "2021-05-15") %>% 
   mutate(scenario = "Observed") %>% 
-  # add_row(total.smoothed %>% 
-  #           filter(scenario == "No intervention") %>% 
-  #           filter(date >= "2021-05-15")) %>%
   add_row(total.smoothed %>% 
             filter(scenario == "March 15", 
                    date >= "2021-03-08")) %>% 
@@ -197,7 +120,7 @@ total.smoothed.plot <- total.smoothed %>%
                                                 "April 15", "April 30")))%>%
   filter(date <= "2021-05-15") 
 
-
+# plot -----------
 cases.p <- total.smoothed.plot %>% 
   filter(date >= "2021-02-15" & date <= "2021-05-15") %>%
   ggplot(aes(x = date, y = fitted)) + 
@@ -272,6 +195,7 @@ cases.p <- total.smoothed.plot %>%
     plot.subtitle   = element_text(size = 11, hjust = 0, color = "gray40"),
     plot.caption    = element_markdown(size = 10, hjust = 0)
   )
-  
+
+# save output ----------
 ggsave(here("lockdown", "fig", tmp_filename), plot = cases.p,
        height = 5.5, width = 11, units = "in", device = cairo_pdf)

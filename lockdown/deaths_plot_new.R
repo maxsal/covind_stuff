@@ -1,3 +1,4 @@
+# libraries ----------
 library(tidyverse)
 library(plotly)
 library(lubridate)
@@ -7,10 +8,13 @@ library(janitor)
 library(glue)
 library(here)
 library(ggtext)
+source(here("lockdown", "extract_cfr.R"))
 
+# use maharashtra pi schedule? use kerala cfr schedule? ----------
 mh <- TRUE
 kl <- TRUE
 
+# load data -----------
 obs <- read_csv("https://api.covid19india.org/csv/latest/case_time_series.csv",
                 col_types = cols()) %>%
   clean_names() %>%
@@ -66,205 +70,40 @@ p <- p %>%
   ) %>%
   drop_na(incidence)
 
-# mar <- read_tsv("march25_smooth_forecast.txt")
-d <- read_csv("https://api.covid19india.org/csv/latest/case_time_series.csv",
-              col_types = cols()) %>%
-  clean_names() %>%
-  select(-date) %>%
-  select(date = date_ymd, daily_cases = daily_confirmed, daily_deaths = daily_deceased,
-         total_cases = total_confirmed, total_deaths = total_deceased, 
-         everything()) %>%
-  filter(date >= "2021-02-15")
+# extract CFR schedule and get plot defaults -----------
+d       <- extract_cfr(mh = mh, kl = kl)
+plt_def <- get_plt_def(mh = mh, kl = kl)
 
-if (kl == TRUE) {
-  taco <- read_csv("https://api.covid19india.org/csv/latest/state_wise_daily.csv",
-                   col_types = cols()) %>%
-    clean_names() %>%
-    select(date = date_ymd, status, value = kl) %>%
-    pivot_wider(
-      names_from  = "status",
-      values_from = "value",
-      id_cols     = "date"
-    ) %>%
-    select(date, daily_cases = Confirmed, daily_deaths = Deceased) %>%
-    mutate(cfr = daily_deaths / daily_cases) %>%
-    mutate(cfr_t7 = zoo::rollmean(cfr, k = 7, fill = NA, align = "right"))
-  d <- d %>% left_join(taco %>% select(date, cfr, cfr_t7), by = "date")
-} else if (mh == TRUE) {
-  taco <- read_csv("https://api.covid19india.org/csv/latest/state_wise_daily.csv",
-                   col_types = cols()) %>%
-    clean_names() %>%
-    select(date = date_ymd, status, value = mh) %>%
-    pivot_wider(
-      names_from  = "status",
-      values_from = "value",
-      id_cols     = "date"
-    ) %>%
-    select(date, daily_cases = Confirmed, daily_deaths = Deceased) %>%
-    mutate(cfr = daily_deaths / daily_cases) %>%
-    mutate(cfr_t7 = zoo::rollmean(cfr, k = 7, fill = NA, align = "right"))
-  d <- d %>% left_join(taco %>% select(date, cfr, cfr_t7), by = "date")
-} else {
-  d <- d  %>%
-    mutate(cfr = daily_deaths / daily_cases) %>%
-    mutate(cfr_t7 = zoo::rollmean(x = cfr, k = 7, fill = NA, align = "right"))
-}
-
-# cfr <- read_csv(here("lockdown", "data", "revised", "cfr.csv"),
-#                 col_types = cols()) %>%
-#   select(place, date, period, cfr = smooth_cfr)
-
-if (mh == TRUE & kl == TRUE) {
-  # cfr <- cfr %>% filter(place == "Maharashtra")
-  tmp_title    <- "Predicted number of daily COVID-19 deaths using Maharashtra lockdown schedule"
-  tmp_subtitle <- "Using Kerala CFR schedule; February 15, 2021 to May 15, 2021"
-  tmp_repel_y  <- c(0, 4000, 4000, 4000, 4000)
-  tmp_nudge    <- 500
-  tmp_filename <- "deaths_kl_mh.pdf"
-} else if (mh == TRUE & kl == FALSE) {
-  tmp_title    <- "Predicted number of daily COVID-19 deaths using Maharashtra lockdown schedule"
-  tmp_subtitle <- "Using Maharashtra CFR schedule; February 15, 2021 to May 15, 2021"
-  tmp_repel_y  <- c(400, 9000, 9000, 9000, 9000)
-  tmp_nudge    <- 1000
-  tmp_filename <- "deaths_mh.pdf"
-} else if (kl == TRUE) {
-  tmp_title    <- "Predicted number of daily COVID-19 deaths using India lockdown schedule"
-  tmp_subtitle <- "Using Kerala CFR schedule; February 15, 2021 to May 15, 2021"
-  tmp_repel_y  <- c(250, 4000, 4000, 4000, 4000)
-  tmp_nudge    <- 500
-  tmp_filename <- "deaths_kl.pdf"
-} else {
-  # cfr <- cfr %>% filter(place == "India")
-  tmp_title    <- "Predicted number of daily COVID-19 deaths using India lockdown schedule"
-  tmp_subtitle <- "Using India CFR schedule; February 15, 2021 to May 15, 2021"
-  tmp_repel_y  <- c(250, 4000, 4000, 4000, 4000)
-  tmp_nudge    <- 500
-  tmp_filename <- "deaths.pdf"
-}
-
-# cfr <- read_tsv("march25_cfr.txt")
-
-
-
-# [1] "March 1"         "March 15"        "March 30"        "April 15"        "April 25"       
-# [6] "No intervention"
-
-##march 1
-mar.01 <- obs %>% 
-  filter(date <= "2021-03-01") %>% 
-  select(date, daily_deaths) %>% 
-  rename(incidence = daily_deaths) %>% 
-  add_row(p %>%  
-            filter(scenario == "March 1") %>% 
-            select(date, incidence) %>% 
-            drop_na() %>% 
-            left_join(d %>% select(date, cfr = cfr_t7)) %>% 
-            mutate(incidence = incidence*cfr) %>% 
-            select(-cfr)) %>% 
-  add_column(scenario = "March 1") 
-
-#march 15
-mar.15 <- obs %>% 
-  filter(date <= "2021-03-15") %>% 
-  select(date, daily_deaths) %>% 
-  rename(incidence = daily_deaths) %>% 
-  add_row(p %>%  
-            filter(scenario == "March 15") %>% 
-            select(date, incidence) %>% 
-            drop_na() %>% 
-            left_join(d %>% select(date, cfr = cfr_t7)) %>% 
-            mutate(incidence = incidence*cfr) %>% 
-            select(-cfr)) %>% 
-  add_column(scenario = "March 15") %>% 
-  drop_na()
-
-
-##march 30
-mar.30 <- obs %>% 
-  filter(date <= "2021-03-30") %>% 
-  select(date, daily_deaths) %>% 
-  rename(incidence = daily_deaths) %>% 
-  add_row(p %>%  
-            filter(scenario == "March 30") %>% 
-            select(date, incidence) %>% 
-            drop_na() %>% 
-            left_join(d %>% select(date, cfr = cfr_t7)) %>% 
-            mutate(incidence = incidence*cfr) %>% 
-            select(-cfr)) %>% 
-  add_column(scenario = "March 30")%>% 
-  drop_na()
-
-
-
-##april 15
-apr.15 <- obs %>% 
-  filter(date <= "2021-04-15") %>% 
-  select(date, daily_deaths) %>% 
-  rename(incidence = daily_deaths) %>% 
-  add_row(p %>%  
-            filter(scenario == "April 15") %>% 
-            select(date, incidence) %>% 
-            drop_na() %>% 
-            left_join(d %>% select(date, cfr = cfr_t7)) %>% 
-            mutate(incidence = incidence*cfr) %>% 
-            select(-cfr)) %>% 
-  add_column(scenario = "April 15")%>% 
-  drop_na()
-
-##april 30
-apr.30 <- obs %>% 
-  filter(date <= "2021-04-30") %>% 
-  select(date, daily_deaths) %>% 
-  rename(incidence = daily_deaths) %>% 
-  add_row(p %>%  
-            filter(scenario == "April 30") %>% 
-            select(date, incidence) %>% 
-            drop_na() %>% 
-            left_join(d %>% select(date, cfr = cfr_t7)) %>% 
-            mutate(incidence = incidence*cfr) %>% 
-            select(-cfr)) %>% 
-  add_column(scenario = "April 30")%>% 
-  drop_na()
-
+# prepare data -----------
+mar_01 <- obs %>% clean_scenario_cfr(p = p, stop_obs = "2021-03-01", scen = "March 1")
+mar_15 <- obs %>% clean_scenario_cfr(p = p, stop_obs = "2021-03-15", scen = "March 15") 
+mar_30 <- obs %>% clean_scenario_cfr(p = p, stop_obs = "2021-03-30", scen = "March 30")
+apr_15 <- obs %>% clean_scenario_cfr(p = p, stop_obs = "2021-04-15", scen = "April 15")
+apr_30 <- obs %>% clean_scenario_cfr(p = p, stop_obs = "2021-04-30", scen = "April 30")
 
 total <- obs %>% 
-  filter(date <= "2021-05-31") %>% 
+  filter(date <= "2021-05-15") %>% 
   select(date, daily_deaths) %>% 
   rename(incidence = daily_deaths) %>% 
   add_column(scenario = "Observed") %>% 
-  add_row(mar.01) %>% 
-  add_row(mar.15) %>% 
-  add_row(mar.30) %>% 
-  add_row(apr.15) %>%
-  add_row(apr.30) 
+  add_row(mar_01) %>% 
+  add_row(mar_15) %>% 
+  add_row(mar_30) %>% 
+  add_row(apr_15) %>%
+  add_row(apr_30) 
 
-# ggplotly(total %>% 
-#            filter(scenario != "March 1") %>%
-#            nest(data = c(date, incidence)) %>% 
-#            mutate(m = purrr::map(data, loess, formula = incidence ~ as.numeric(date), span = 0.5),
-#                   fitted = purrr::map(m, `[[`, "fitted")) %>% 
-#            select(-m) %>% 
-#            unnest(cols = c(data, fitted)) %>% 
-#            ggplot(aes(x = date, y = fitted)) + 
-#            #geom_point() + 
-#            geom_line(aes(colour = scenario)))
-
-total.smoothed <- total %>% 
+total_smoothed <- total %>% 
   filter(scenario != "March 1") %>% 
-  filter(date <= "2021-05-31") %>% 
+  filter(date <= "2021-05-15") %>% 
   nest(data = c(date, incidence)) %>% 
   mutate(m = purrr::map(data, loess, formula = incidence ~ as.numeric(date), span = 0.5),
          fitted = purrr::map(m, `[[`, "fitted")) %>% 
   select(-m) %>% 
   unnest(cols = c(data, fitted))
 
-
-total.smoothed.plot <- total.smoothed %>% 
+total_smoothed_plot <- total_smoothed %>% 
   filter(scenario == "Observed") %>% 
   filter(date <= "2021-05-15")  %>% 
-  # add_row(total.smoothed %>% 
-  #           filter(scenario == "No intervention") %>% 
-  #           filter(date >= "2021-05-02")) %>%
   add_row(total.smoothed %>% 
             filter(scenario == "March 15", 
                    date >= "2021-03-09")) %>% 
@@ -281,7 +120,8 @@ total.smoothed.plot <- total.smoothed %>%
                                                 "April 15", "April 30")))%>%
   filter(date <= "2021-05-15") 
 
-deaths.p <- total.smoothed.plot %>% 
+# plot ----------
+deaths_p <- total_smoothed_plot %>% 
   ggplot(aes(x = date, y = fitted)) + 
   geom_line(aes(color = scenario), size = 1) +
   scale_colour_lancet() + 
@@ -306,7 +146,7 @@ deaths.p <- total.smoothed.plot %>%
                        label = paste0(formatC(round(fitted), format="f", big.mark=",", digits=0), " deaths"),
                        color = scenario,
                        family = "Lato"), 
-                   nudge_y = tmp_nudge, 
+                   nudge_y = plt_def$tmp_nudge, 
                    nudge_x = -10, 
                    size = 4,
                    show.legend  = FALSE, 
@@ -319,7 +159,7 @@ deaths.p <- total.smoothed.plot %>%
                     mutate(text = c("Observed data", "Intervention  1", "Intervention  2", 
                                     "Intervention  3", "Intervention  4"), 
                            x = as.Date(c("2021-03-01", "2021-03-09", "2021-03-24", "2021-04-08", "2021-04-21")), 
-                           y = tmp_repel_y), 
+                           y = plt_def$tmp_repel_y), 
                   aes(x = x, 
                       y = y, 
                       label = text,
@@ -330,16 +170,8 @@ deaths.p <- total.smoothed.plot %>%
                   show.legend  = FALSE, 
                   segment.size = 0) + 
   guides(color = guide_legend(nrow = 1)) + 
-  # annotate("text", 
-  #          x        = as.Date("2021-05-15"), 
-  #          y        = 2500, 
-  #          label    = "Observed data through\n May 15, 2021", 
-  #          size     = 4,
-  #          hjust    = 1, 
-  #          fontface = "bold",
-  #          family   = "Lato") + 
-  labs(title    = tmp_title,
-       subtitle = tmp_subtitle,
+  labs(title    = plt_def$tmp_title,
+       subtitle = plt_def$tmp_subtitle,
        y        = "Daily deaths",
        x        = "",
        color    = "Date of intervention",
@@ -364,5 +196,6 @@ deaths.p <- total.smoothed.plot %>%
     plot.caption    = element_markdown(size = 10, hjust = 0)
     )
 
-ggsave(here("lockdown", "fig", tmp_filename), plot = deaths.p, 
+# save output -----------
+ggsave(here("lockdown", "fig", plt_def$tmp_filename), plot = deaths.p, 
        height = 5.5, width = 11, units = "in", device = cairo_pdf)
