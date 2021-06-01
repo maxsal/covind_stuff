@@ -10,7 +10,7 @@ library(anytime)
 library(zoo)
 options(stringsAsFactors = FALSE)
 
-mh <- TRUE
+mh <- FALSE
 kl <- TRUE
 
 d <- read_csv("https://api.covid19india.org/csv/latest/case_time_series.csv",
@@ -60,11 +60,7 @@ scenarios <- c("2021-03-01", "2021-03-15", "2021-03-30",
 
 for (i in seq_along(scenarios)) {
   
-  if (mh == TRUE) {
-    tmp_filename <- glue("{scenarios[i]}_mh_smooth1_data.txt")
-  } else {
-    tmp_filename <- glue("{scenarios[i]}_smooth1_data.txt")
-  }
+  tmp_filename <- glue("{scenarios[i]}_smooth1_data.txt")
   
   if (i == 1) {
     p <- read_tsv(here("lockdown", "data", "final",
@@ -117,10 +113,11 @@ table_cases <- table_cases %>%
     names_from  = "scenario",
     values_from = "value",
     id_cols     = "date"
-  )
+  ) %>%
+  mutate(across(.cols = where(is.numeric), ~ .x / 1e6))
 
 table_cases_print <- table_cases %>%
-  mutate_if(is.numeric, \(x) trimws(format(x, big.mark = ","))) %>%
+  mutate_if(is.numeric, \(x) trimws(format(x, big.mark = ",", digits = 2, nsmall = 2))) %>%
   mutate_if(is.character, \(x) ifelse(x == "NA", "-", x))
 
 table_deaths <- table_cases
@@ -177,8 +174,11 @@ for (i in seq_along(scenarios)) {
   
 }
 
+table_deaths <- table_deaths %>%
+  mutate(across(where(is.numeric), ~ .x / 1000))
+
 for (i in 1:6) {
-  table_deaths[[i + 1]] <- trimws(format(table_deaths[[i + 1]], big.mark = ","))
+  table_deaths[[i + 1]] <- trimws(format(table_deaths[[i + 1]], nsmall = 2, digits = 2, big.mark = ","))
 }
 
 for (i in 1:4) {
@@ -187,12 +187,9 @@ for (i in 1:4) {
   table_deaths[[i+3]] <- tmp_a
 }
 
-if (mh == TRUE & kl == FALSE) {
+if (mh == TRUE) {
   case_out  <- here("lockdown", "output", "table_mh_cases.txt")
   death_out <- here("lockdown", "output", "table_mh_deaths.txt")
-} else if (mh == TRUE & kl == TRUE) {
-  case_out  <- here("lockdown", "output", "table_kl_mh_cases.txt")
-  death_out <- here("lockdown", "output", "table_kl_mh_deaths.txt")
 } else if (kl == TRUE) {
   case_out  <- here("lockdown", "output", "table_kl_cases.txt")
   death_out <- here("lockdown", "output", "table_kl_deaths.txt")
