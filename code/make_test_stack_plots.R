@@ -7,20 +7,20 @@ n_lag <- 7
 count_dat <- get_count_data()
 test_dat  <- get_testing_data()
 
-dat <- count_dat %>%
+dat <- count_dat |>
   left_join(test_dat %>% select(-abbrev),
-            by = c("place", "date")) %>%
+            by = c("place", "date")) |>
   dplyr::mutate(
     daily_tpr = daily_cases / daily_tests
-  ) %>%
-  group_by(place) %>%
-  arrange(date) %>%
+  ) |>
+  group_by(place) |>
+  arrange(date) |>
   dplyr::mutate(
     tests_change = (daily_tests - dplyr::lag(daily_tests, n_lag)) / dplyr::lag(daily_tests, n_lag),
     tpr_change   = (daily_tpr   - dplyr::lag(daily_tpr, n_lag)) / dplyr::lag(daily_tpr, n_lag),
     cases_change = (daily_cases - dplyr::lag(daily_cases, n_lag)) / dplyr::lag(daily_cases, n_lag)
-  ) %>%
-  ungroup() %>%
+  ) |>
+  ungroup() |>
   filter(date <= today)
 
 abbrevs <- unique(dat$abbrev)
@@ -31,16 +31,16 @@ for (i in seq_along(abbrevs)) {
   
   message(glue("plotting {abbrevs[i]} [{i}/{length(abbrevs)} ({round(i*100/length(abbrevs))}%)]..."))
   
-  d <- dat %>%
+  d <- dat |>
     dplyr::filter(abbrev == abbrevs[i])
   
-  tmp_place <- d %>% pull(place) %>% unique()
+  tmp_place <- d |> pull(place) |> unique()
 
-  coeff_d <- .25 / d %>% dplyr::filter(date >= (today - 30)) %>% pull(daily_tests) %>% max(., na.rm = T)
-  tpr_d_mag <- d %>% dplyr::filter(date == (today - 7)) %>% pull(daily_tpr)
+  coeff_d <- .25 / d |> dplyr::filter(date >= (today - 30)) |> pull(daily_tests) |> max(na.rm = T)
+  tpr_d_mag <- d |> dplyr::filter(date == (today - 7)) |> pull(daily_tpr)
 
-  bar_plt <- d %>%
-    dplyr::filter(date >= (today - 30)) %>%
+  bar_plt <- d |>
+    dplyr::filter(date >= (today - 30)) |>
     ggplot(aes(x = date)) +
     geom_bar(aes(y = daily_tests), stat = "identity", fill = "#FF9933", alpha = 0.5) +
     geom_bar(aes(y = daily_cases), stat = "identity", fill = "#138808") +
@@ -65,12 +65,12 @@ for (i in seq_along(abbrevs)) {
     )
   bar_plt
 
-  med_case_change <- d %>% dplyr::filter(date >= (today - 30)) %>% pull(cases_change) %>% median()
-  med_test_change <- d %>% dplyr::filter(date >= (today - 30)) %>% pull(tests_change) %>% median()
+  med_case_change <- d |> dplyr::filter(date >= (today - 30)) |> pull(cases_change) |> median()
+  med_test_change <- d |> dplyr::filter(date >= (today - 30)) |> pull(tests_change) |> median()
   
   
-  line_plt <- d %>%
-    dplyr::filter(date >= (today - 30)) %>%
+  line_plt <- d |>
+    dplyr::filter(date >= (today - 30)) |>
     ggplot(aes(x = date)) +
     geom_hline(yintercept = 0, color = "gray40") +
     geom_hline(yintercept = med_test_change, color = "#FF9933", linetype = 2, size = 1) +
