@@ -1,7 +1,7 @@
 pacman::p_load(tidyverse, janitor, glue, ggtext, gt)
 
-wave_2_start <- as.Date("2021-02-15")
-today <- Sys.Date() - 2
+wave_2_start <- as.Date("2021-02-14")
+today <- Sys.Date()
 n_lag <- 30
 
 d <- read_csv(glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-data/master/{today}/everything.csv"),
@@ -182,12 +182,12 @@ col_3[3] <- "2,004 (June 16, reporting blip); 1,281 (September 15)"
 
 tib <- tibble(
   "Stats" = col_1,
-  "March 24, 2020 - February 14, 2021" = col_2,
-  "June 3, 2020 - February 14, 2021" = col_3,
+  "March 24, 2020 - February 13, 2021" = col_2,
+  "June 13, 2020 - February 13, 2021" = col_3,
   "tmp" = col_4
 )
 
-names(tib)[names(tib) == "tmp"] <- glue("February 15, 2021 - {format(today - 1, '%B %e, %Y')}")
+names(tib)[names(tib) == "tmp"] <- glue("February 14, 2021 - {format(today - 1, '%B %e, %Y')}")
 
 tib %>%
   gt() %>%
@@ -223,8 +223,8 @@ tib %>%
   # column widths
   cols_width(
     c(Stats) ~ px(230),
-    c(`March 24, 2020 - February 14, 2021`) ~ px(285),
-    c(`June 3, 2020 - February 14, 2021`) ~ px(275),
+    c(2) ~ px(285),
+    c(3) ~ px(275),
     # vars(R, CFR) ~ px(75),
     everything() ~ px(300)
   ) %>%
@@ -247,7 +247,7 @@ tib %>%
   tab_spanner(
     label   = "Wave 1",
     # columns = vars(`June 3, 2020 - February 14, 2021`)
-    columns = c(`March 24, 2020 - February 14, 2021`, `June 3, 2020 - February 14, 2021`)
+    columns = c(2, 3)
   ) %>%
   tab_spanner(
     label   = "Wave 2",
