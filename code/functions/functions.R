@@ -646,7 +646,7 @@ get_metrics_tables <- function() {
         # title
         tab_header(
             title    = md("**Assessing COVID-19 in India**"),
-            subtitle = glue("as of {format(today, '%B %e')}")
+            subtitle = glue("data through {format(today, '%B %e')}")
         ) %>%
         # caption
         tab_source_note(
@@ -766,7 +766,7 @@ get_metrics_tables <- function() {
         # title
         tab_header(
             title    = md("**Assessing COVID-19 in India**"),
-            subtitle = glue("as of {format(today, '%B %e')}")
+            subtitle = glue("data through {format(today, '%B %e')}")
         ) %>%
         # caption
         tab_source_note(
@@ -863,7 +863,7 @@ get_metrics_tables <- function() {
         # title
         tab_header(
             title    = md("**Assessing COVID-19 in India**"),
-            subtitle = glue("as of {format(today, '%B %e')}")
+            subtitle = glue("data through {format(today, '%B %e')}")
         ) %>%
         # caption
         tab_source_note(
