@@ -8,10 +8,10 @@ set.seed(set_seed)
 start_date <- "2020-03-24"
 max_date   <- Sys.Date() - 1
 
-d <- do_it_all() %>%
+d <- do_it_all() |>
   dplyr::filter(date <= max_date)
 
-f <- d %>% pull(place) %>% unique()
+f <- d |> pull(place) |> unique()
 
 options(warn = -1)
 
@@ -19,19 +19,19 @@ for (i in seq_along(f)) {
   
   message(glue("plotting {f[i]} [{i}/{length(f)} ({round(i*100/length(f))}%)]..."))
   
-  inc_plt <- d %>%
-    dplyr::filter(place == f[i]) %>%
-    dplyr::filter(date >= start_date & date <= max_date) %>%
-    dplyr::filter(daily_cases > 0 & daily_recovered > 0 & daily_deaths > 0) %>%
-    select(date, daily_cases, daily_deaths, daily_recovered) %>%
-    pivot_longer(names_to = "Trend", values_to = "count", -c(date)) %>%
+  inc_plt <- d |>
+    dplyr::filter(place == f[i]) |>
+    dplyr::filter(date >= start_date & date <= max_date) |>
+    dplyr::filter(daily_cases > 0 & daily_recovered > 0 & daily_deaths > 0) |>
+    select(date, daily_cases, daily_deaths, daily_recovered) |>
+    pivot_longer(names_to = "Trend", values_to = "count", -c(date)) |>
     mutate(
       Trend = as.factor(case_when(
         Trend == "daily_cases" ~ "New cases",
         Trend == "daily_deaths" ~ "Fatalities",
         Trend == "daily_recovered" ~ "Recovered"
       ))
-    ) %>%
+    ) |>
     ggplot(aes(x = date, y = count, group = factor(Trend, levels = c("Recovered", "Fatalities", "New cases")), fill = factor(Trend, levels = c("Recovered", "Fatalities", "New cases")))) +
     geom_bar(stat = "identity") +
     scale_fill_manual(values = daily_barplot_colors) +
@@ -56,8 +56,8 @@ for (i in seq_along(f)) {
       plot.caption    = element_markdown(hjust = 0)
       )
   
-  tvr_plt <- d %>%
-    dplyr::filter(date >= "2020-03-24" & place == f[i]) %>%
+  tvr_plt <- d |>
+    dplyr::filter(date >= "2020-03-24" & place == f[i]) |>
     ggplot(aes(x = date, y = r_est)) +
     geom_hline(yintercept = 1, linetype = 2, color = "#FF9933") +
     geom_ribbon(aes(ymin = r_lower, ymax = r_upper), fill = "#138808", alpha = 0.5) +
