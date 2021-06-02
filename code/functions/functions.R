@@ -1,76 +1,72 @@
+if (getRversion() < '4.1.0') stop("script requires R version 4.1.0 or greater")
+
 # get count data ----------
 get_count_data <- function(top_n = FALSE, abbrevs = NULL) {
     
     message("getting count data...")
     
     # population data
-    pops <- readr::read_csv("https://raw.githubusercontent.com/umich-cphds/cov-ind-19/master/model/populations.csv", col_types = cols()) %>%
+    pops <- readr::read_csv("https://raw.githubusercontent.com/umich-cphds/cov-ind-19/master/model/populations.csv", col_types = cols()) |>
         dplyr::rename(place = full)
     
     # national-level count data
-    nat_dat <- readr::read_csv("https://api.covid19india.org/csv/latest/case_time_series.csv", col_types = cols()) %>%
-        janitor::clean_names() %>%
-        dplyr::select(
-            date         = date_ymd,
-            daily_cases  = daily_confirmed,
-            daily_deaths = daily_deceased,
-            daily_recovered,
-            cases     = total_confirmed,
-            deaths    = total_deceased,
-            recovered = total_recovered) %>%
-        # dplyr::filter(country == "India") %>%
-        dplyr::mutate(place = "India") %>%
-        # dplyr::arrange(date) %>%
-        # dplyr::mutate(
-        #     daily_cases     = cases - dplyr::lag(cases),
-        #     daily_deaths    = deaths - dplyr::lag(deaths),
-        #     daily_recovered = recovered - dplyr::lag(recovered)
-        # ) %>%
-        tibble::add_column(abbrev = "India")
+    nat_dat <- readr::read_csv("https://api.covid19india.org/csv/latest/case_time_series.csv", col_types = cols()) |>
+      janitor::clean_names() |>
+      dplyr::select(
+        date         = date_ymd,
+        daily_cases  = daily_confirmed,
+        daily_deaths = daily_deceased,
+        daily_recovered,
+        cases        = total_confirmed,
+        deaths       = total_deceased,
+        recovered    = total_recovered
+      ) %>%
+      dplyr::mutate(place = "India") |>
+      tibble::add_column(abbrev = "India")
     
     # state-level count data
-    state_dat <- readr::read_csv("https://api.covid19india.org/csv/latest/state_wise_daily.csv", col_types = cols()) %>%
-        janitor::clean_names() %>%
-        dplyr::select(-c(date, tt, un)) %>%
-        dplyr::rename(date = date_ymd) %>%
+    state_dat <- readr::read_csv("https://api.covid19india.org/csv/latest/state_wise_daily.csv", col_types = cols()) |>
+        janitor::clean_names() |>
+        dplyr::select(-c(date, tt, un)) |>
+        dplyr::rename(date = date_ymd) |>
         tidyr::pivot_longer(
             names_to = "abbrev",
             values_to = "value",
             cols = -c("date", "status")
-        ) %>%
+        ) |>
         tidyr::pivot_wider(
             names_from = "status",
             values_from = "value",
             id_cols = c("date", "abbrev")
-        ) %>%
+        ) |>
         dplyr::rename(
             daily_cases     = Confirmed,
             daily_recovered = Recovered,
             daily_deaths    = Deceased
-        ) %>%
-        dplyr::group_by(abbrev) %>%
-        dplyr::arrange(date) %>%
+        ) |>
+        dplyr::group_by(abbrev) |>
+        dplyr::arrange(date) |>
         dplyr::mutate(
             cases     = cumsum(daily_cases),
             recovered = cumsum(daily_recovered),
             deaths    = cumsum(daily_deaths)
-        ) %>%
-        dplyr::ungroup() %>%
+        ) |>
+        dplyr::ungroup() |>
         dplyr::left_join(pops %>% select(-population), by = "abbrev")
     
     if (top_n == TRUE) {
         if (is.null(abbrevs)) {
-            abbrevs <- state_dat %>%
-                dplyr::group_by(place) %>%
-                dplyr::filter(cases == max(cases)) %>%
-                dplyr::ungroup() %>%
-                dplyr::arrange(desc(cases)) %>%
-                utils::head(20) %>%
-                filter(abbrev != "dd") %>%
+            abbrevs <- state_dat |>
+                dplyr::group_by(place) |>
+                dplyr::filter(cases == max(cases)) |>
+                dplyr::ungroup() |>
+                dplyr::arrange(desc(cases)) |>
+                utils::head(20) |>
+                filter(abbrev != "dd") |>
                 dplyr::pull(place)
         }
         
-        state_dat <- state_dat %>% dplyr::filter(place %in% abbrevs)
+        state_dat <- state_dat |> dplyr::filter(place %in% abbrevs)
         
     }
     
