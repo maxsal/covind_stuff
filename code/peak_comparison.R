@@ -1,7 +1,7 @@
 pacman::p_load(tidyverse, janitor, glue, ggtext, gt)
 
 wave_2_start <- as.Date("2021-02-14")
-today <- Sys.Date()
+today <- Sys.Date() - 1
 n_lag <- 30
 
 d <- read_csv(glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-data/master/{today}/everything.csv"),
@@ -10,6 +10,8 @@ d <- read_csv(glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-dat
   mutate(
     daily_tpr = daily_cases / daily_tests
   )
+
+max_date <- d |> pull(date) |> max()
 
 w1 <- d %>%
   dplyr::filter(date < wave_2_start)
@@ -187,7 +189,7 @@ tib <- tibble(
   "tmp" = col_4
 )
 
-names(tib)[names(tib) == "tmp"] <- glue("February 14, 2021 - {format(today - 1, '%B %e, %Y')}")
+names(tib)[names(tib) == "tmp"] <- glue("February 14, 2021 - {format(max_date, '%B %e, %Y')}")
 
 tib %>%
   gt() %>%
@@ -235,7 +237,7 @@ tib %>%
   # title
   tab_header(
     title    = md("**Comparing COVID-19 Waves in India**"),
-    subtitle = glue("data through {format(today - 1, '%B %e')}")
+    subtitle = glue("data through {format(max_date, '%B %e')}")
   ) %>%
   # caption
   tab_source_note(
