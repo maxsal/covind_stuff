@@ -162,9 +162,7 @@ do_it_all <- function() {
     count_dat <- get_count_data()
     test_dat  <- get_testing_data()
     merge_dat <- merge_data(count = count_dat, test = test_dat) 
-    # %>%
-    #     get_dbl()
-    r0_dat <- get_r0(merge_dat) %>%
+    r0_dat    <- get_r0(merge_dat) |>
         dplyr::select(
             place,
             date,
@@ -173,7 +171,7 @@ do_it_all <- function() {
             r_upper = upper
         )
     
-    merge_dat %>%
+    merge_dat |>
         left_join(r0_dat, by = c("place", "date"))
     
     
@@ -182,7 +180,7 @@ do_it_all <- function() {
 # forecast data
 get_abbrevs <- function(d) {
     
-    d %>% pull(abbrev) %>% unique()
+    d |> pull(abbrev) |> unique()
     
 }
 
@@ -531,7 +529,7 @@ get_metrics_tables <- function() {
                        by = c("place")) %>%
       dplyr::left_join(sf, by = c("place")) %>%
       dplyr::mutate(perc_vaccine   = pct_at_least_one,
-                    total_vacc     = format(total_vax, big.mark = ","),
+                    total_vacc     = format(total_vax_doses, big.mark = ","),
                     daily_cases    = format(daily_cases, big.mark = ","),
                     daily_deaths   = format(daily_deaths, big.mark = ","),
                     daily_tests    = format(daily_tests, big.mark = ","),
