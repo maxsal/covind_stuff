@@ -2,15 +2,26 @@
 pacman::p_load(tidyverse, here, glue, patchwork, ggtext, janitor)
 source(here("lockdown", "extract_cfr.R"))
 
-cols <- c(
-  "India"       = "#138808",
-  "Maharashtra" = "#FF9933",
-  "Kerala"      = "#000080"
+cols_1 <- c(
+  "Strong effect"   = "#138808",
+  "Moderate effect" = "#FF9933"
+)
+
+cols_2 <- c(
+  "Moderate CFR" = "#138808",
+  "High CFR"     = "#FF9933",
+  "Low CFR"      = "#000080"
 )
 
 # load data ----------
 pis <- read_tsv(here("data", "pi_schedule.txt"),
-                col_types = cols())
+                col_types = cols()) %>%
+  mutate(
+    place = case_when(
+      place == "India" ~ "Strong effect",
+      place == "Maharashtra" ~ "Moderate effect"
+    )
+  )
 
 cfrs <- extract_cfr() |>
   select(date, India = cfr_t7, Maharashtra = cfr_mh_t7,
@@ -20,7 +31,14 @@ cfrs <- extract_cfr() |>
     values_to = "CFR",
     -date
   ) %>%
-  filter(date <= "2021-05-15")
+  filter(date <= "2021-05-15") %>%
+  mutate(
+    Location = case_when(
+      Location == "India" ~ "Moderate CFR",
+      Location == "Maharashtra" ~ "High CFR",
+      Location == "Kerala" ~ "Low CFR"
+    )
+  )
 
 # make plots ----------
 pi_plt <- pis %>%
@@ -33,7 +51,7 @@ pi_plt <- pis %>%
     y       = "Pi(t)",
     caption = "Note: Dashed line represents no change to pi schedule"
   ) +
-  scale_color_manual(values = cols) +
+  scale_color_manual(values = cols_1) +
   theme_classic() +
   theme(
     text            = element_text(family = "Lato"),
@@ -60,7 +78,7 @@ cfr_plt <- cfrs %>%
   ) +
   scale_y_continuous(labels = scales::percent) +
   scale_x_date(date_labels = "%B") +
-  scale_color_manual(values = cols) +
+  scale_color_manual(values = cols_2) +
   theme_classic() +
   theme(
     text            = element_text(family = "Lato"),

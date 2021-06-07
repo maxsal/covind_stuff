@@ -214,15 +214,15 @@ death_plt <- function(dat, title,
     )
   }
 
-deaths_p    <- death_plt(dat = tsp_india, title = "India CFR")
-deaths_p_mh <- death_plt(dat = tsp_mh, title = "Maharashtra CFR")
-deaths_p_kl <- death_plt(dat = tsp_kl, title = "Kerala CFR")
+deaths_p    <- death_plt(dat = tsp_india, title = "Moderate CFR")
+deaths_p_mh <- death_plt(dat = tsp_mh, title = "High CFR")
+deaths_p_kl <- death_plt(dat = tsp_kl, title = "Low CFR")
 
-patched <- deaths_p / deaths_p_mh / deaths_p_kl
+patched <- deaths_p_mh / deaths_p / deaths_p_kl
 
 full_plt <- patched +
   plot_annotation(
-    title    = "Predicted number of daily COVID-19 deaths under Maharashtra lockdown schedule",
+    title    = "Predicted number of daily COVID-19 deaths under moderate lockdown effect\nwith waning immunity",
     subtitle = "February 15, 2021 to May 15, 2021",
     caption  = glue("**Notes:** Observations and prediction period until May 15, 2021. ",
                     "Figures in boxes show peak number of deaths for each intervention.<br>",

@@ -29,7 +29,7 @@ obs <- read_csv("https://api.covid19india.org/csv/latest/case_time_series.csv",
   filter(date >= "2021-02-15")
 
 scenarios <- c("2021-03-01", "2021-03-15", "2021-03-30",
-               "2021-04-15", "2021-04-30", "no_intervention")
+               "2021-04-15", "no_intervention")
 
 for (i in seq_along(scenarios)) {
   
@@ -37,25 +37,25 @@ for (i in seq_along(scenarios)) {
   tmp_mh_filename <- glue("{scenarios[i]}_mh_smooth1_data.txt")
   
   if (i == 1) {
-    p <- read_tsv(here("lockdown", "data", "final",
+    p <- read_tsv(here("lockdown", "rupam", "output",
                        tmp_filename),
                   col_types = cols()) %>%
       mutate(scenario = scenarios[i])
     
-    p_mh <- read_tsv(here("lockdown", "data", "final",
+    p_mh <- read_tsv(here("lockdown", "rupam", "output",
                        tmp_mh_filename),
                   col_types = cols()) %>%
       mutate(scenario = scenarios[i])
     
   } else {
     p <- bind_rows(p,
-                   read_tsv(here("lockdown", "data", "final",
+                   read_tsv(here("lockdown", "rupam", "output",
                                  tmp_filename),
                             col_types = cols()) %>%
                      mutate(scenario = scenarios[i]))
     
     p_mh <- bind_rows(p_mh,
-                   read_tsv(here("lockdown", "data", "final",
+                   read_tsv(here("lockdown", "rupam", "output",
                                  tmp_mh_filename),
                             col_types = cols()) %>%
                      mutate(scenario = scenarios[i]))
@@ -63,7 +63,7 @@ for (i in seq_along(scenarios)) {
   
 }
 
-tmp_outname  <- "fig1_case_plot.pdf"
+tmp_outname  <- "fig4_case_plot.pdf"
 tmp_title    <- "Strong lockdown effect"
 tmp_mh_title <- "Moderate lockdown effect"
 
@@ -295,7 +295,7 @@ patched <- cases_p / cases_p_mh
 
 full_plt <- patched +
   plot_annotation(
-    title    = "Predicted number of daily COVID-19 cases under lockdown",
+    title    = "Predicted number of daily COVID-19 cases under lockdown with waning immunity",
     subtitle = "February 15, 2021 to May 15, 2021",
     caption  = glue("**Notes:** Observations and prediction period until May 15, 2021. ",
                     "Figures in boxes show peak number of cases for each intervention.<br>",

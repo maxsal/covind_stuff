@@ -74,7 +74,9 @@ get_peaks <- function(d,
 peaks <- dat |> get_peaks() |>
   select(place, w1_order, w1_peak_date, w1_peak_daily_cases, w1_total_cases,
          w2_order, w2_peak_date, w2_peak_daily_cases, w2_total_cases,
-         pct_cases_w2)
+         pct_cases_w2) |>
+  left_join(read_csv(here("data", "metrics_2021_06_04.csv"), col_types = cols()),
+            by = c("place" = "State"))
 
 write_tsv(x = peaks, file = here("data", "output", "peaks_by_state_table.txt"))
 
