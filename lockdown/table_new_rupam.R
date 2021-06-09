@@ -11,7 +11,7 @@ library(zoo)
 options(stringsAsFactors = FALSE)
 
 mh <- FALSE
-kl <- TRUE
+kl <- FALSE
 
 d <- read_csv("https://api.covid19india.org/csv/latest/case_time_series.csv",
               col_types = cols()) %>%
@@ -98,21 +98,35 @@ proj <- p %>%
   mutate(scenario = paste(trimws(format(as.Date(scenario), '%B')), trimws(format(as.Date(scenario), '%e')))) %>%
   filter(!(date == "2021-05-15" & scenario == "NA NA"))
 
+# table_cases <- bind_rows(obs, proj) %>%
+#   mutate(scenario = case_when(
+#     scenario == "NA NA" ~ "No intervention",
+#     T ~ scenario
+#   ))
+
 table_cases <- bind_rows(obs, proj) %>%
   mutate(scenario = case_when(
     scenario == "NA NA" ~ "No intervention",
     T ~ scenario
-  ))
-
-table_cases <- table_cases %>%
+  )) %>%
+  rename(
+    ci_est   = value,
+    ci_lower = lower_ci,
+    ci_upper = upper_ci
+  ) %>%
+  pivot_longer(
+    names_to = "stat",
+    values_to = "est",
+    cols = starts_with("ci_")
+  ) %>%
   mutate(scenario = case_when(
     tolower(scenario) %in% c("observed", "no intervention") ~ "Observed/No Intervention",
     T ~ scenario
   )) %>%
   pivot_wider(
     names_from  = "scenario",
-    values_from = "value",
-    id_cols     = "date"
+    values_from = "est",
+    id_cols     = c("date", "stat")
   ) %>%
   mutate(across(.cols = where(is.numeric), ~ .x / 1e6))
 
@@ -144,7 +158,8 @@ for (i in seq_along(scenarios)) {
   
   tmp_d <- d %>%
     filter(date <= as.Date(scenarios[i])) %>%
-    select(date, daily_cases, daily_deaths, total_cases, total_deaths)
+    select(date, daily_cases, daily_deaths, total_cases, total_deaths) %>%
+    mutate(scenario = "Observed")
   tmp_p <- p %>%
     filter(scenario == scenarios[i]) %>%
     drop_na(incidence) %>%
