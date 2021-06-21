@@ -1,19 +1,17 @@
 # libraries ----------
-library(tidyverse)
-library(plotly)
-library(lubridate)
-library(ggsci)
-library(ggrepel)
-library(janitor)
-library(glue)
-library(here)
-library(ggtext)
-library(patchwork)
+pacman::p_load(tidyverse, lubridate, ggsci, ggrepel, janitor, glue, here, ggtext, patchwork)
 source(here("lockdown", "extract_cfr.R"))
 
 # # use maharashtra pi schedule? use kerala cfr schedule? ----------
 mh <- TRUE
-tmp_outname <- "fig3_death_plot.pdf"
+if (mh == TRUE) {
+  tmp_outname <- "fig3_death_plot.pdf"
+  plt_title <- "Predicted number of daily COVID-19 deaths under moderate lockdown effect"
+} else {
+    tmp_outname <- "fig2_death_plot.pdf"
+    plt_title <- "Predicted number of daily COVID-19 deaths under strong lockdown effect"
+    }
+# tmp_outname <- "fig2_death_plot.pdf"
 # kl <- TRUE
 
 # load data -----------
@@ -222,7 +220,7 @@ patched <- deaths_p_mh / deaths_p / deaths_p_kl
 
 full_plt <- patched +
   plot_annotation(
-    title    = "Predicted number of daily COVID-19 deaths under moderate lockdown effect",
+    title    = plt_title,
     subtitle = "February 15, 2021 to May 15, 2021",
     caption  = glue("**Notes:** Observations and prediction period until May 15, 2021. ",
                     "Figures in boxes show peak number of deaths for each intervention.<br>",

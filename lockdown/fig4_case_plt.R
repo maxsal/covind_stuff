@@ -1,14 +1,5 @@
 # libraries ----------
-library(tidyverse)
-library(plotly)
-library(lubridate)
-library(ggsci)
-library(ggrepel)
-library(janitor)
-library(glue)
-library(here)
-library(ggtext)
-library(patchwork)
+pacman::p_load(tidyverse, lubridate, ggsci, ggrepel, janitor, glue, here, ggtext, patchwork)
 source(here("lockdown", "extract_cfr.R"))
 
 # # use maharashtra pi schedule? ------------

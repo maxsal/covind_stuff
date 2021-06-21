@@ -26,11 +26,10 @@ calc_peaks <- function(d) {
     filter(peak_daily_cases > 0) |>
     arrange(date)
   
-  
 }
 
 get_peaks <- function(d,
-                      wave_1_start = "2020-06-03",
+                      wave_1_start = "2020-06-13",
                       wave_2_start = "2021-02-14") {
   
   w1 <- d |>
@@ -78,37 +77,126 @@ peaks <- dat |> get_peaks() |>
   left_join(read_csv(here("data", "metrics_2021_06_04.csv"), col_types = cols()),
             by = c("place" = "State"))
 
-write_tsv(x = peaks, file = here("data", "output", "peaks_by_state_table.txt"))
+write_tsv(x = peaks, file = here("data", "output", "case_peaks_by_state_table.txt"))
 
-peaks_plt_dat <- peaks %>% select(place, w1_order, w2_order) %>%
-  pivot_longer(
-    names_to = "wave",
-    values_to = "rank",
-    -place
+
+# deaths -----------
+calc_d_peaks <- function(d) {
+  
+  d |>
+    group_by(place)|>
+    filter(daily_deaths == max(daily_deaths, na.rm = T)) |>
+    ungroup() |>
+    select(date, place, peak_daily_deaths = daily_deaths) |>
+    left_join(
+      d |>
+        select(date, place, daily_deaths) |>
+        group_by(place) |>
+        summarize(total_deaths = sum(daily_deaths, na.rm = T)),
+      by = "place"
+    ) |>
+    filter(peak_daily_deaths > 0) |>
+    arrange(date) |>
+    group_by(place) |>
+    filter(date == min(date, na.rm = T)) |>
+    ungroup()
+  
+}
+
+
+get_d_peaks <- function(d,
+                      wave_1_start = "2020-06-13",
+                      wave_2_start = "2021-02-14") {
+  
+  w1 <- d |>
+    filter(date >= wave_1_start & date < wave_2_start)
+  w2 <- d |>
+    filter(date >= wave_2_start & date <= "2021-05-31")
+  
+  w1_peaks <- calc_d_peaks(w1) |>
+    distinct() |>
+    rename(
+      w1_peak_date         = date,
+      w1_peak_daily_deaths = peak_daily_deaths,
+      w1_total_deaths      = total_deaths
+    ) |>
+    mutate(
+      w1_order = 1:n()
+    )
+  
+  w2_peaks <- calc_d_peaks(w2) |>
+    distinct() |>
+    rename(
+      w2_peak_date         = date,
+      w2_peak_daily_deaths = peak_daily_deaths,
+      w2_total_deaths      = total_deaths
+    ) |>
+    mutate(
+      w2_order = 1:n()
+    )
+  
+  peaks <- left_join(
+    w1_peaks, w2_peaks, by = "place"
   ) %>%
-  mutate(wave = case_when(wave == "w1_order" ~ 1, T ~ 2)) 
+    mutate(
+      pct_deaths_w2 = w2_total_deaths / (w2_total_deaths + w1_total_deaths)
+    )
+  
+  return(peaks)
+  
+}
 
-peaks_plt_dat |>
-  ggplot(aes(x = wave, y = rank, color = place)) +
-  geom_bump(size = 2, smooth = 8) +
-  geom_point(size = 7) +
-  geom_text(data = peaks_plt_dat %>% filter(wave == 1),
-            aes(x = wave - .05, label = place), size = 5, hjust = 1) +
-  geom_text(data = peaks_plt_dat %>% filter(wave == 2),
-            aes(x = wave + .05, label = place), size = 5, hjust = 0) +
-  labs(
-    title = "Order of COVID-19 peaks in Wave 1 and Wave 2 in India",
-    x     = "Wave",
-    y     = "Order"
-  ) +
-  coord_cartesian(xlim = c(0.65, 2.35), ylim = rev(c(1, 37)), clip = "off") +
-  scale_y_reverse(breaks = 1:37) +
-  scale_x_continuous(breaks = c(1,2)) +
-  theme_minimal() +
-  theme(legend.position = "none",
-        panel.grid = element_blank(),
-        plot.title = element_text(face = "bold"),
-        text = element_text(family = "Lato"))
+dat <-dat |> filter(date != "2020-06-16")
 
-ggsave(here("data", "output", "peaks_by_state.pdf"),
-       height = 10, width = 15, device = cairo_pdf)
+peaks_d <- dat |> get_d_peaks() |>
+  select(place, w1_order, w1_peak_date, w1_peak_daily_deaths, w1_total_deaths,
+         w2_order, w2_peak_date, w2_peak_daily_deaths, w2_total_deaths,
+         pct_deaths_w2) |>
+  left_join(read_csv(here("data", "metrics_2021_06_04.csv"), col_types = cols()),
+            by = c("place" = "State")) |>
+  janitor::clean_names()
+  # # dplyr::filter(w1_peak_daily_deaths > 10) |>
+  # dplyr::group_by(place) |>
+  # dplyr::filter(w1_peak_date == min(w1_peak_date))
+
+write_tsv(x = peaks_d, file = here("data", "output", "death_peaks_by_state_table.txt"))
+
+
+
+
+
+##############
+### OLD ######
+##############
+# peaks_plt_dat <- peaks %>% select(place, w1_order, w2_order) %>%
+#   pivot_longer(
+#     names_to = "wave",
+#     values_to = "rank",
+#     -place
+#   ) %>%
+#   mutate(wave = case_when(wave == "w1_order" ~ 1, T ~ 2)) 
+# 
+# peaks_plt_dat |>
+#   ggplot(aes(x = wave, y = rank, color = place)) +
+#   geom_bump(size = 2, smooth = 8) +
+#   geom_point(size = 7) +
+#   geom_text(data = peaks_plt_dat %>% filter(wave == 1),
+#             aes(x = wave - .05, label = place), size = 5, hjust = 1) +
+#   geom_text(data = peaks_plt_dat %>% filter(wave == 2),
+#             aes(x = wave + .05, label = place), size = 5, hjust = 0) +
+#   labs(
+#     title = "Order of COVID-19 peaks in Wave 1 and Wave 2 in India",
+#     x     = "Wave",
+#     y     = "Order"
+#   ) +
+#   coord_cartesian(xlim = c(0.65, 2.35), ylim = rev(c(1, 37)), clip = "off") +
+#   scale_y_reverse(breaks = 1:37) +
+#   scale_x_continuous(breaks = c(1,2)) +
+#   theme_minimal() +
+#   theme(legend.position = "none",
+#         panel.grid = element_blank(),
+#         plot.title = element_text(face = "bold"),
+#         text = element_text(family = "Lato"))
+# 
+# ggsave(here("data", "output", "peaks_by_state.pdf"),
+#        height = 10, width = 15, device = cairo_pdf)

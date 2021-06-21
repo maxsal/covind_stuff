@@ -7,8 +7,7 @@ extract_cfr <- function() {
     select(-date) %>%
     select(date = date_ymd, daily_cases = daily_confirmed, daily_deaths = daily_deceased,
            total_cases = total_confirmed, total_deaths = total_deceased, 
-           everything()) %>%
-    filter(date >= "2021-02-15")
+           everything())
 
   message("extracting Kerala CFR...")
     taco_kl <- read_csv("https://api.covid19india.org/csv/latest/state_wise_daily.csv",
@@ -43,7 +42,8 @@ extract_cfr <- function() {
     message("extracting India CFR...")
     d <- d  %>%
       mutate(cfr = daily_deaths / daily_cases) %>%
-      mutate(cfr_t7 = zoo::rollmean(x = cfr, k = 7, fill = NA, align = "right"))
+      mutate(cfr_t7 = zoo::rollmean(x = cfr, k = 7, fill = NA, align = "right")) %>%
+      filter(date >= "2021-02-15")
   
   return(d)
   

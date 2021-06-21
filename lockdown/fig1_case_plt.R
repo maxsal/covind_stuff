@@ -1,14 +1,6 @@
 # libraries ----------
-library(tidyverse)
-library(plotly)
-library(lubridate)
-library(ggsci)
-library(ggrepel)
-library(janitor)
-library(glue)
-library(here)
-library(ggtext)
-library(patchwork)
+pacman::p_load(tidyverse, lubridate, ggsci, ggrepel, janitor, glue, here,
+               ggtext, patchwork)
 source(here("lockdown", "extract_cfr.R"))
 
 # # use maharashtra pi schedule? ------------
@@ -73,12 +65,6 @@ p <- p %>%
       trimws(format(as.Date(scenario), '%B')),
       trimws(format(as.Date(scenario), '%e'))
     )
-  ) %>%
-  mutate(
-    scenario = case_when(
-      scenario == "NA NA" ~ "No intervention",
-      T ~ scenario
-    )
   )
 
 p_mh <- p_mh %>%
@@ -86,12 +72,6 @@ p_mh <- p_mh %>%
     scenario = paste(
       trimws(format(as.Date(scenario), '%B')),
       trimws(format(as.Date(scenario), '%e'))
-    )
-  ) %>%
-  mutate(
-    scenario = case_when(
-      scenario == "NA NA" ~ "No intervention",
-      T ~ scenario
     )
   )
 
@@ -105,8 +85,7 @@ clean_prep <- function(x) {
   apr_15 <- obs %>% clean_scenario(p = x, stop_obs = "2021-04-15", scen = "April 15")
   # apr_30 <- obs %>% clean_scenario(p = x, stop_obs = "2021-04-30", scen = "April 30")
   
-  total <- none %>% 
-    # add_row(mar_01) %>% 
+  total <- none %>%
     add_row(mar_15) %>% 
     add_row(mar_30) %>% 
     add_row(apr_15)
@@ -122,7 +101,7 @@ clean_prep <- function(x) {
     unnest(cols = c(data, fitted))
   
   total.smoothed.plot <- total.smoothed %>% 
-    filter(scenario == "No intervention") %>% 
+    filter(scenario == "No intervention") %>%
     filter(date <= "2021-05-15") %>% 
     mutate(scenario = "Observed") %>% 
     add_row(total.smoothed %>% 
@@ -183,6 +162,8 @@ cases_p <- total_smoothed_plot %>%
   geom_text_repel(data = total_smoothed_plot %>% 
                      group_by(scenario) %>% 
                      filter(date == min(date)) %>% 
+                    distinct() %>%
+                    slice(1) %>%
                      dplyr::ungroup() %>% 
                      select(scenario, date, fitted) %>% 
                      mutate(text = c("Observed data", "March 15\nlockdown", "March 30\nlockdown", 
