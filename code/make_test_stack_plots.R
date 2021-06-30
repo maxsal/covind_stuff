@@ -1,14 +1,16 @@
-pacman::p_load(tidyverse, janitor, glue, ggtext, here, patchwork, httr)
+librarian::shelf(
+  tidyverse, janitor, glue, ggtext, here, patchwork, httr, maxsal/covid19india
+  )
 source(here("code", "functions", "functions.R"))
 
 today <- Sys.Date() - 1
 n_lag <- 7
 
-count_dat <- get_count_data()
-test_dat  <- get_testing_data()
+count_dat <- bind_rows(get_nat_counts(), get_state_counts())
+test_dat  <- bind_rows(get_nat_tests(), get_state_tests())
 
 dat <- count_dat |>
-  left_join(test_dat %>% select(-abbrev),
+  left_join(test_dat,
             by = c("place", "date")) |>
   dplyr::mutate(
     daily_tpr = daily_cases / daily_tests
@@ -23,16 +25,16 @@ dat <- count_dat |>
   ungroup() |>
   filter(date <= today)
 
-abbrevs <- unique(dat$abbrev)
+places <- unique(dat$place)
 
 options(warn = -1)
 
-for (i in seq_along(abbrevs)) {
+for (i in seq_along(places)) {
   
-  message(glue("plotting {abbrevs[i]} [{i}/{length(abbrevs)} ({round(i*100/length(abbrevs))}%)]..."))
+  message(glue("plotting {places[i]} [{i}/{length(places)} ({round(i*100/length(places))}%)]..."))
   
   d <- dat |>
-    dplyr::filter(abbrev == abbrevs[i])
+    dplyr::filter(place == places[i])
   
   tmp_place <- d |> pull(place) |> unique()
 

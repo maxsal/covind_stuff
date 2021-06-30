@@ -1,5 +1,5 @@
 message("*beep boop* loading libraries...")
-pacman::p_load(
+librarian::shelf(
   tidyverse,
   janitor,
   glue,
@@ -8,13 +8,7 @@ pacman::p_load(
   here,
   httr,
   patchwork,
-  EpiEstim
+  EpiEstim,
+  maxsal/covid19india
 )
-# suppressMessages(library(tidyverse))
-# suppressMessages(library(janitor))
-# suppressMessages(library(glue))
-# suppressMessages(library(ggtext))
-# suppressMessages(library(extrafont))
-# suppressMessages(library(here))
-# suppressMessages(library(httr))
 message("*beep boop* libraries loaded!!")

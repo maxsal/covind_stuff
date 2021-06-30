@@ -8,7 +8,26 @@ set.seed(set_seed)
 start_date <- "2020-03-24"
 max_date   <- Sys.Date() - 1
 
-d <- do_it_all() |>
+d <- bind_rows(get_nat_counts(), get_state_counts()) %>%
+  left_join(
+    bind_rows(
+      get_nat_tests(),
+      get_state_tests()
+    ),
+    by = c("place", "date")) %>%
+  left_join(
+    get_r0(.) %>%
+      dplyr::rename(
+        r_est   = r,
+        r_lower = lower,
+        r_upper = upper
+      ), 
+    by = c("place", "date")) %>%
+  left_join(
+    pop %>%
+      dplyr::select(-population),
+    by = "place") %>%
+  mutate(tpr = daily_cases / daily_tests) %>%
   dplyr::filter(date <= max_date)
 
 f <- d |> pull(place) |> unique()
