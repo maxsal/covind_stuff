@@ -665,7 +665,7 @@ get_metrics_tables <- function() {
         # color cells based on values
         data_color(
             columns = c(R),
-            colors = col_bin(c( "#FFFFFF", "#fae0de"), domain = NULL, bins = c(0,1.5,1000), pretty = F)
+            colors = col_bin(c("#FFFFFF", "#fae0de"), domain = NULL, bins = c(0,1,1000), pretty = F)
         ) %>%
         data_color(
             columns = c(`7-day average daily TPR`),
@@ -779,7 +779,7 @@ get_metrics_tables <- function() {
         # color cells based on values
         data_color(
             columns = c(R),
-            colors = col_bin(c( "#FFFFFF", "#fae0de"), domain = NULL, bins = c(0,1.5,1000), pretty = F)
+            colors = col_bin(c("#FFFFFF", "#fae0de"), domain = NULL, bins = c(0,1,1000), pretty = F)
         ) %>%
         data_color(
             columns = c(`7-day average daily TPR`),
