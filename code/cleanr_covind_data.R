@@ -1,9 +1,7 @@
-librarian::shelf(
-  tidyverse, EpiEstim, gt, glue, lubridate, janitor, scales, ggtext, here, httr,
-  maxsal/covid19india
+covid19india::biblioteca(
+  c("tidyverse", "EpiEstim", "gt", "glue", "lubridate", "janitor",
+    "scales", "ggtext", "here", "httr", "maxsal/covid19india")
 )
-
-source(here("code", "functions", "functions.R"))
 
 set_seed <- 46342
 set.seed(set_seed)
@@ -17,3 +15,4 @@ tabs   <- get_metrics_tables()
 tabs$full
 tabs$point_in_time
 tabs$cumulative
+
