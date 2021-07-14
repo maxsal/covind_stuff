@@ -6,7 +6,7 @@ set_seed <- 46342
 set.seed(set_seed)
 
 start_date <- "2020-03-24"
-max_date   <- Sys.Date() - 1
+max_date   <- Sys.Date() - 2
 
 d <- bind_rows(get_nat_counts(), get_state_counts()) %>%
   left_join(
@@ -55,6 +55,7 @@ for (i in seq_along(f)) {
     geom_bar(stat = "identity") +
     scale_fill_manual(values = daily_barplot_colors) +
     scale_y_continuous(labels = scales::comma) +
+    scale_x_date(date_labels = "%b %e") +
     guides(fill = guide_legend(title = "", override.aes = list(size = 1))) +
     labs(
       title    = glue("Daily number of COVID-19 cases, fatalities, and recovered in {f[i]}"),
@@ -82,6 +83,7 @@ for (i in seq_along(f)) {
     geom_ribbon(aes(ymin = r_lower, ymax = r_upper), fill = "#138808", alpha = 0.5) +
     geom_line(size = 1, color = "#138808") +
     geom_point(shape = 3, size = 0.5) +
+    scale_x_date(date_labels = "%b %e") +
     labs(
       title    = glue("Time-varying R estimate in {f[i]}"),
       subtitle = glue("from {format(as.Date(start_date), '%B %e, %Y')} to {format(max(d$date), '%B %e, %Y')}"),

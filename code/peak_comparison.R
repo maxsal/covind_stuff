@@ -1,7 +1,7 @@
-pacman::p_load(tidyverse, janitor, glue, ggtext, gt)
+covid19india::biblioteca(tidyverse, janitor, glue, ggtext, gt)
 
-wave_2_start <- as.Date("2021-02-14")
-today <- Sys.Date() - 1
+wave_2_start <- as.Date("2021-02-15")
+today <- "2021-07-11"
 n_lag <- 30
 
 d <- read_csv(glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-data/master/{today}/everything.csv"),
@@ -184,12 +184,12 @@ col_3[3] <- "2,004 (June 16, reporting blip); 1,281 (September 15)"
 
 tib <- tibble(
   "Stats" = col_1,
-  "March 24, 2020 - February 13, 2021" = col_2,
-  "June 13, 2020 - February 13, 2021" = col_3,
+  "March 24, 2020 - February 14, 2021" = col_2,
+  "June 3, 2020 - February 14, 2021" = col_3,
   "tmp" = col_4
 )
 
-names(tib)[names(tib) == "tmp"] <- glue("February 14, 2021 - {format(max_date, '%B %e, %Y')}")
+names(tib)[names(tib) == "tmp"] <- glue("February 15, 2021 - {format(max_date, '%B %e, %Y')}")
 
 tib %>%
   gt() %>%
