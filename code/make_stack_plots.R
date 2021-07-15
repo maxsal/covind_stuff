@@ -6,7 +6,7 @@ set_seed <- 46342
 set.seed(set_seed)
 
 start_date <- "2020-03-24"
-max_date   <- Sys.Date() - 2
+max_date   <- Sys.Date() - 1
 
 d <- bind_rows(get_nat_counts(), get_state_counts()) %>%
   left_join(
