@@ -1,7 +1,7 @@
-librarian::shelf(
-  tidyverse, janitor, glue, ggtext, here, patchwork, httr, maxsal/covid19india
-  )
-source(here("code", "functions", "functions.R"))
+# pacman::p_load(
+#   tidyverse, janitor, glue, ggtext, here, patchwork, httr, covid19india
+#   )
+# source(here("code", "functions", "functions.R"))
 
 today <- Sys.Date() - 1
 n_lag <- 7
