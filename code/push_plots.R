@@ -1,5 +1,4 @@
-source(here::here("code", "functions", "libri.R"))
-libri(
+ally::libri(
   tidyverse, janitor, glue, ggtext, extrafont, here, httr, patchwork,
   EpiEstim, maxsal/covid19india
 )
