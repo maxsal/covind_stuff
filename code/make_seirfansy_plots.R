@@ -44,7 +44,7 @@ for (i in seq_along(places)) {
       subtitle = paste0("from ", format(today - trailing_days, "%B %e, %Y"), " to ", format(today + pred_days, "%B %e, %Y")),
       x        = "Date",
       y        = "Reported daily case count",
-      caption  = glue("**Note:** Predicting {pred_days} forward<br>**\uA9 COV-IND-19 Study Group**")
+      caption  = glue("**Note:** Predicting {pred_days} days forward<br>**\uA9 COV-IND-19 Study Group**")
     ) +
     theme_classic() +
     theme(
