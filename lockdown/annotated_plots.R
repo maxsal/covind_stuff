@@ -182,3 +182,106 @@ cairo_pdf(here("lockdown", "fig", "stack_annotated_plot.pdf"),
           width = 12, height = 10)
 r_plot / case_plot
 dev.off()
+
+dt <- d %>% filter(place == "India" & date >= "2021-01-01" & date <= "2021-03-31")
+
+
+(r_plt <- dt %>%
+  ggplot(aes(x = date, y = r_est)) +
+    geom_hline(yintercept = 1, color = "gray40") +
+    geom_vline(xintercept = as.Date("2021-01-30")) +
+    geom_vline(xintercept = as.Date("2021-02-14")) +
+    geom_vline(xintercept = as.Date("2021-02-17")) +
+  geom_line() +
+  labs(title = "R in India"))
+
+(tpr_plt <- dt %>%
+    ggplot(aes(x = date, y = tpr)) +
+    geom_vline(xintercept = as.Date("2021-01-30")) +
+    geom_vline(xintercept = as.Date("2021-02-14")) +
+    geom_vline(xintercept = as.Date("2021-02-17")) +
+    geom_line() +
+    labs(title = "TPR in India"))
+
+(cfr_plt <- dt %>%
+    ggplot(aes(x = date, y = daily_deaths / daily_cases)) +
+    geom_vline(xintercept = as.Date("2021-01-30")) +
+    geom_vline(xintercept = as.Date("2021-02-14")) +
+    geom_vline(xintercept = as.Date("2021-02-17")) +
+    geom_line() +
+    labs(title = "CFR in India"))
+
+(case_plt <- dt %>%
+    ggplot(aes(x = date, y = daily_cases)) +
+    geom_vline(xintercept = as.Date("2021-01-30")) +
+    geom_vline(xintercept = as.Date("2021-02-14")) +
+    geom_vline(xintercept = as.Date("2021-02-17")) +
+    geom_line() +
+    labs(title = "Cases in India"))
+
+cairo_pdf(filename = "~/Downloads/metrics_stack_plot.pdf", width = 8, height = 8)
+r_plt / tpr_plt / cfr_plt / case_plt
+dev.off()
+
+
+(mh_plt <- d %>%
+  filter(place == "Maharashtra" & date >= "2021-01-01" & date <= "2021-03-31") %>%
+  ggplot(aes(x = date, y = r_est)) +
+  geom_hline(yintercept = 1, color = "gray40") +
+  geom_vline(xintercept = as.Date("2021-01-30")) +
+  geom_vline(xintercept = as.Date("2021-02-14")) +
+  geom_vline(xintercept = as.Date("2021-02-17")) +
+  geom_line() +
+  labs(title = "R in Maharashtra"))
+
+(dl_plt <- d %>%
+  filter(place == "Delhi" & date >= "2021-01-01" & date <= "2021-03-31") %>%
+  ggplot(aes(x = date, y = r_est)) +
+  geom_hline(yintercept = 1, color = "gray40") +
+  geom_vline(xintercept = as.Date("2021-01-30")) +
+  geom_vline(xintercept = as.Date("2021-02-14")) +
+  geom_vline(xintercept = as.Date("2021-02-17")) +
+  geom_line() +
+  labs(title = "R in Delhi"))
+
+(gj_plt <- d %>%
+    filter(place == "Gujarat" & date >= "2021-01-01" & date <= "2021-03-31") %>%
+    ggplot(aes(x = date, y = r_est)) +
+    geom_hline(yintercept = 1, color = "gray40") +
+    geom_vline(xintercept = as.Date("2021-01-30")) +
+    geom_vline(xintercept = as.Date("2021-02-14")) +
+    geom_vline(xintercept = as.Date("2021-02-17")) +
+    geom_line() +
+    labs(title = "R in Gujarat"))
+
+(ka_plt <- d %>%
+    filter(place == "Karnataka" & date >= "2021-01-01" & date <= "2021-03-31") %>%
+    ggplot(aes(x = date, y = r_est)) +
+    geom_hline(yintercept = 1, color = "gray40") +
+    geom_vline(xintercept = as.Date("2021-01-30")) +
+    geom_vline(xintercept = as.Date("2021-02-14")) +
+    geom_vline(xintercept = as.Date("2021-02-17")) +
+    geom_line() +
+    labs(title = "R in Karnataka"))
+
+
+cairo_pdf("~/Downloads/select_r_plots.pdf", width = 8, height = 8)
+r_plt / mh_plt / dl_plt / gj_plt / ka_plt
+dev.off()
+
+keep <- covid19india::pop[place != "India"][order(-population)][1:12][,abbrev]
+
+(wrap_plt <- d %>%
+  filter(abbrev %in% keep & date >= "2021-01-01" & date <= "2021-03-31") %>%
+  ggplot(aes(x = date, y = r_est)) +
+  geom_hline(yintercept = 1, color = "gray40") +
+  geom_vline(xintercept = as.Date("2021-01-30")) +
+  geom_vline(xintercept = as.Date("2021-02-14")) +
+  geom_vline(xintercept = as.Date("2021-02-17")) +
+  geom_line() +
+  facet_wrap(~place) +
+  labs(title = "R in Wave 2"))
+
+cairo_pdf("~/Downloads/wrap_plot.pdf", width = 8, height = 8)
+wrap_plt
+dev.off()
