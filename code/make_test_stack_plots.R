@@ -31,7 +31,7 @@ options(warn = -1)
 
 for (i in seq_along(places)) {
   
-  message(glue("plotting {places[i]} [{i}/{length(places)} ({round(i*100/length(places))}%)]..."))
+  cli::cli_alert(glue("plotting {places[i]} [{i}/{length(places)} ({round(i*100/length(places))}%)]..."))
   
   d <- dat |>
     dplyr::filter(place == places[i])
