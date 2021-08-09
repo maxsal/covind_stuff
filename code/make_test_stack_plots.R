@@ -1,13 +1,8 @@
-# pacman::p_load(
-#   tidyverse, janitor, glue, ggtext, here, patchwork, httr, covid19india
-#   )
-# source(here("code", "functions", "functions.R"))
-
 today <- Sys.Date() - 1
 n_lag <- 7
 
-count_dat <- bind_rows(get_nat_counts(), get_state_counts())
-test_dat  <- bind_rows(get_nat_tests(), get_state_tests())
+count_dat <- bind_rows(get_nat_counts(useDT = TRUE), get_state_counts(useDT = TRUE))
+test_dat  <- bind_rows(get_nat_tests(useDT = TRUE), get_state_tests(useDT = TRUE))
 
 dat <- count_dat |>
   left_join(test_dat,
