@@ -1,8 +1,8 @@
 today <- Sys.Date() - 1
 n_lag <- 7
 
-count_dat <- bind_rows(get_nat_counts(useDT = TRUE), get_state_counts(useDT = TRUE))
-test_dat  <- bind_rows(get_nat_tests(useDT = TRUE), get_state_tests(useDT = TRUE))
+count_dat <- bind_rows(get_nat_counts(), get_state_counts())
+test_dat  <- bind_rows(get_nat_tests(), get_state_tests())
 
 dat <- count_dat |>
   left_join(test_dat,
