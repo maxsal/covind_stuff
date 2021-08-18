@@ -115,7 +115,7 @@ for (i in seq_along(places)) {
 
 options(warn = 1)
 
-system("git status")
-system("git add .")
-system("git commit -m 'push new test stack plots'")
-system("git push")
+# system("git status")
+# system("git add .")
+# system("git commit -m 'push new test stack plots'")
+# system("git push")

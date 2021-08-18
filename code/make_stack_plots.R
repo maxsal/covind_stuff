@@ -173,7 +173,7 @@ for (i in seq_along(f)) {
 
 options(warn = 1)
 
-system("git status")
-system("git add .")
-system("git commit -m 'push new stack plots'")
-system("git push")
+# system("git status")
+# system("git add .")
+# system("git commit -m 'push new stack plots'")
+# system("git push")
