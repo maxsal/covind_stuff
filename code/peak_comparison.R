@@ -1,6 +1,7 @@
 ally::libri(tidyverse, janitor, glue, ggtext, gt)
 
-wave_2_start <- as.Date("2021-02-15")
+wave_2_start <- as.Date("2021-02-14")
+end_date <- as.Date("2021-07-31")
 today <- Sys.Date() - 1
 n_lag <- 30
 
@@ -9,7 +10,8 @@ d <- read_csv(glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-dat
   dplyr::filter(place == "India") %>%
   mutate(
     daily_tpr = daily_cases / daily_tests
-  )
+  ) %>%
+  dplyr::filter(date <= end_date)
 
 max_date <- d %>% pull(date) %>% max()
 
