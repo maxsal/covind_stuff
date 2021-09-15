@@ -8,7 +8,7 @@ set.seed(set_seed)
 start_date <- "2020-03-24"
 max_date   <- Sys.Date() - 1
 
-d <- covid19india::get_all_data(useDT = TRUE)[date <= max_date]
+d <- covid19india::get_all_data()[date <= max_date]
 f <- unique(d[, place])
 
 # d <- bind_rows(get_nat_counts(), get_state_counts()) %>%
