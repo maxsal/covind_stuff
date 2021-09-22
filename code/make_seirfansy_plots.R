@@ -28,8 +28,8 @@ for (i in seq_along(places)) {
   abb <- covid19india::pop %>% filter(place == state) %>% pull(abbrev)
   if (length(abb) > 1) {abb <- "ct"}
   
-  if (!httr::http_error(glue::glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-data/master/2021-07-28/seirfansy/prediction_{abb}.txt"))) {
-  tmp_plt <- data.table::fread(glue::glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-data/master/2021-07-28/seirfansy/prediction_{abb}.txt"), showProgress = FALSE) %>%
+  if (!httr::http_error(glue::glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-data/master/{today}/seirfansy/prediction_{abb}.txt"))) {
+  tmp_plt <- data.table::fread(glue::glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-data/master/{today}/seirfansy/prediction_{abb}.txt"), showProgress = FALSE) %>%
     filter(date >= today + 1 & date <= today + pred_days & section == "positive_daily_reported") %>%
     select(date, value = mean) %>%
     mutate(pred = "Predicted") %>%
