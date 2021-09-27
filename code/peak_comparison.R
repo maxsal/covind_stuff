@@ -1,17 +1,20 @@
-ally::libri(tidyverse, janitor, glue, ggtext, gt)
+ally::libri(tidyverse, janitor, glue, ggtext, gt, covid19india)
 
 wave_2_start <- as.Date("2021-02-14")
-end_date <- as.Date("2021-07-31")
 today <- Sys.Date() - 1
+# end_date <- as.Date("2021-07-31")
+end_date <- today
 n_lag <- 30
 
-d <- read_csv(glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-data/master/{today}/everything.csv"),
-              col_types = cols()) %>%
+d <- covid19india::get_all_data() %>% as_tibble() %>%
+  # read_csv(glue("https://raw.githubusercontent.com/umich-cphds/cov-ind-19-data/master/{today}/everything.csv"),
+  #             col_types = cols()) %>%
   dplyr::filter(place == "India") %>%
   mutate(
     daily_tpr = daily_cases / daily_tests
   ) %>%
-  dplyr::filter(date <= end_date)
+  dplyr::filter(date <= end_date) %>%
+  rename(cases = total_cases)
 
 max_date <- d %>% pull(date) %>% max()
 
