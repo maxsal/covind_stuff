@@ -196,7 +196,7 @@ tib <- tibble(
 
 names(tib)[names(tib) == "tmp"] <- glue("February 15, 2021 - {format(max_date, '%B %e, %Y')}")
 
-tib %>%
+tab <- tib %>%
   gt() %>%
   # format table body text
   tab_style(
@@ -284,3 +284,5 @@ tib %>%
     align = c("left"),
     columns = c(Stats)
   )
+
+print(tab)
