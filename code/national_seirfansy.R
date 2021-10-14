@@ -11,8 +11,11 @@ suppressPackageStartupMessages({
   library(SEIRfansy)
 })
 
+out_path <- "~/projects/seirfansy/output/"
+iter     <- ifelse(Sys.getenv("production") == "TRUE", "prod","test")
+
 f <- c("clean_prediction.R", "get_impo.R", "get_init.R", "get_phase.R")
-for (i in seq_along(f)) {source(paste0("code/functions/", f[i]))}
+for (i in seq_along(f)) {source(paste0("~/projects/seirfansy/code/functions/", f[i]))}
 
 # Set variables based on testing or production
 if ( Sys.getenv("production") == "TRUE" ) {
@@ -74,20 +77,13 @@ tryCatch(
       save_plots      = save_plt
     )
     
-    # directory ----------
-    wd <- paste0(data_repo, "/", today, "/seirfansy")
-    if (!dir.exists(wd)) {
-      dir.create(wd, recursive = TRUE)
-      message("Creating ", wd)
-    }
-    
     pred_clean <- clean_prediction(result$prediction,
                                    state    = state_name,
                                    obs_days = obs_days,
                                    t_pred   = t_pred)
     
-    write_tsv(pred_clean, paste0(wd, "/prediction_", state, "_", max_date, ".txt"))
-    write_tsv(as_tibble(result$mcmc_pars, .name_repair = "unique"), paste0(wd, "/prediction_pars_", state, "_", max_date, ".txt"))
+    fwrite(pred_clean, paste0(out_path, "prediction_", state, "_", max_date, "_", iter, ".txt"))
+    fwrite(as_tibble(result$mcmc_pars, .name_repair = "unique"), paste0(out_path, "prediction_pars_", state, "_", max_date, "_", iter, ".txt"))
     
     p_pred <- pred_clean %>%
       filter(section == "positive_reported") %>%
@@ -122,7 +118,7 @@ tryCatch(
       "ifr"                   = ifr[obs_days + 1]
     )
     
-    fwrite(impo, paste0(wd, "/important_", state, "_", max_date, ".txt"))
+    fwrite(impo, paste0(out_path, "important_", state, "_", max_date, "_", iter, ".txt"))
     message("Successfully executed the call.")
   },
   error = function(e){

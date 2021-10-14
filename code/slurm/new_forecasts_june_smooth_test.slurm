@@ -2,7 +2,7 @@
 
 #SBATCH --mail-type=END
 #SBATCH --time=0-20:00
-#SBATCH --job-name=nat_seirfansy
+#SBATCH --job-name=wave2_test
 #SBATCH --mem-per-cpu=8G
 #SBATCH --array=1-6
 #SBATCH --output=/home/%u/slurm_output/slurm-%A_%a.out
@@ -20,4 +20,4 @@ export production=FALSE
 module load Rgeospatial/3.6.1-2019-09-29
 module load jags
 
-Rscript --vanilla ~/projects/covid/seirfansy/national_seirfansy.R
+Rscript --vanilla ~/projects/covind_wave2/new_forecasts_june_smooth.R
