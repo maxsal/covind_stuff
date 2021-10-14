@@ -9,7 +9,7 @@ set.seed(set_seed)
 
 source(here("code", "make_stack_plots.R"))
 source(here("code", "make_test_stack_plots.R"))
-source(here("code", "make_seirfansy_plots.R"))
+source(here("code", "india_vs_wout_state.R"))
 source(here("code", "peak_comparison.R"))
 
 tabs <- covid19india::get_metrics_tables()
