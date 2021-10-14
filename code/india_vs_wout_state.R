@@ -1,19 +1,14 @@
 pacman::p_load(covid19india, data.table, ggplot2, patchwork, janitor,
                ggtext, here, glue, lubridate)
 
-
-fclean_names <- function(x) {
-  setnames(x, names(x), janitor::make_clean_names(names(x)))
-}
-
 obs <- covid19india::get_all_data()
 
 comp_state <- "Kerala"
 
-obs <- obs |>
-  fclean_names() |>
-  DT(date >= "2021-02-15" & place %in% c("India", comp_state)) |>
-  DT(, .(place, date, daily_cases, daily_deaths))
+setnames(obs, names(obs), make_clean_names(names(obs)))
+
+obs <- obs[date >= "2021-02-15" & place %in% c("India", comp_state),
+           .(place, date, daily_cases, daily_deaths)]
 
 obs_india <- obs[place == "India"]
 obs_state <- obs[place == comp_state]
@@ -24,9 +19,9 @@ obs_state$daily_deaths <- obs_india$daily_deaths - obs_state$daily_deaths
 obs <- rbindlist(list(obs_india, obs_state))[, `:=` (
   date  = as.Date(date),
   place = fifelse(place == comp_state, as.character(glue("India without {comp_state}")), place)
-  )] |>
-  melt(id.vars = c("place", "date"), variable.name = "cases", value.name = "count") |>
-  DT(, count := fifelse(count < 0, 0, count))
+  )]
+  
+obs <- melt(obs, id.vars = c("place", "date"), variable.name = "cases", value.name = "count")[, count := fifelse(count < 0, 0, count)]
 
 
 case_plt <- obs[cases == "daily_cases" & place == "India"] |>
@@ -72,7 +67,7 @@ plt <- plt +
     plot.tag          = element_text(size = 18, hjust = 0, vjust = 1, family = "Lato", face = "bold")
   )
 
-ggsave(filename = here("fig", glue("case_death_{comp_state}.pdf")),
+ggsave(filename = here("india_wo_kerala_plots", glue("case_death_{comp_state}_{format(obs[, max(date)], '%Y%m%d')}.pdf")),
        plot     = plt,
        height   = 6,
        width    = 15,
@@ -82,10 +77,10 @@ rm(obs, obs_india, obs_state)
 
 obs <- covid19india::get_all_data()
 
-obs <- obs |>
-  fclean_names() |>
-  DT(date >= "2021-01-01" & place %in% c("India", comp_state)) |>
-  DT(, .(place, date, daily_cases, daily_deaths))
+setnames(obs, names(obs), make_clean_names(names(obs)))
+
+obs <- obs[date >= "2021-01-01" & place %in% c("India", comp_state),
+           .(place, date, daily_cases, daily_deaths)]
 
 obs_india <- obs[place == "India"]
 obs_state <- obs[place == comp_state]
@@ -113,7 +108,7 @@ plt2 <- obs |>
   theme(plot.subtitle = element_text(color = "gray40"))
 
 
-ggsave(filename = here("fig", glue("cfr_{comp_state}.pdf")),
+ggsave(filename = here("india_wo_kerala_plots", glue("cfr_{comp_state}_{format(obs[, max(date)], '%Y%m%d')}.pdf")),
        plot     = plt2,
        height   = 6,
        width    = 10,
