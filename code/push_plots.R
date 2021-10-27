@@ -8,7 +8,7 @@ set_seed <- 46342
 set.seed(set_seed)
 
 source(here("code", "make_stack_plots.R"))
-source(here("code", "make_test_stack_plots.R"))
+# source(here("code", "make_test_stack_plots.R"))
 source(here("code", "make_vax_bar_plots.R"))
 source(here("code", "india_vs_wout_state.R"))
 # source(here("code", "peak_comparison.R"))
