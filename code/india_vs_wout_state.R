@@ -1,7 +1,7 @@
 pacman::p_load(covid19india, data.table, ggplot2, patchwork, janitor,
                ggtext, here, glue, lubridate)
 
-obs <- covid19india::get_all_data()
+obs <- covid19india::get_all_data(mohfw = FALSE)
 
 comp_state <- "Kerala"
 
