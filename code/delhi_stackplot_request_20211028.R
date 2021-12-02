@@ -23,15 +23,15 @@ daily_barplot_colors <- c(
 
 inc_plt <- tmp |>
   ggplot(aes(x = date, y = count, group = factor(Trend, levels = c("Recovered", "Fatalities", "New cases")), fill = factor(Trend, levels = c("Recovered", "Fatalities", "New cases")))) +
-  
-  geom_vline(xintercept = as.Date("2021-01-27"), linetype = 2, color = "gray40") +
-  annotate(geom = "text", x = as.Date("2021-01-25"), y = tmp[, .(value = sum(count)), by = date][, max(value)] * 1.05,
-           label = "January 27", size = 3, color = "gray40", hjust = 1, family = "Lato") +
-  geom_vline(xintercept = as.Date("2021-04-19"), linetype = 2, color = "gray40") +
-  annotate(geom = "text", x = as.Date("2021-04-21"), y = tmp[, .(value = sum(count)), by = date][, max(value)] * 1.05,
-           label = "April 19", size = 3, color = "gray40", hjust = 0, family = "Lato") +
-  
   geom_bar(stat = "identity") +
+  
+  geom_vline(xintercept = as.Date("2021-01-27"), linetype = 2, size = 1, color = "gray40") +
+  annotate(geom = "text", x = as.Date("2021-01-24"), y = tmp[, .(value = sum(count)), by = date][, max(value)] * 1.05,
+           label = "January 27", size = 4, color = "gray40", hjust = 1, family = "Lato") +
+  geom_vline(xintercept = as.Date("2021-04-19"), linetype = 2, size = 1, color = "gray40") +
+  annotate(geom = "text", x = as.Date("2021-04-22"), y = tmp[, .(value = sum(count)), by = date][, max(value)] * 1.05,
+           label = "April 19", size = 4, color = "gray40", hjust = 0, family = "Lato") +
+  
   scale_fill_manual(values = daily_barplot_colors) +
   scale_y_continuous(labels = scales::comma) +
   scale_x_date(date_labels = "%b %Y", date_breaks = "3 months") +
@@ -57,12 +57,12 @@ inc_plt <- tmp |>
 tvr_plt <- taco[between(date, start_date, max_date)] |>
   ggplot(aes(x = date, y = r_est)) +
   
-  geom_vline(xintercept = as.Date("2021-01-27"), linetype = 2, color = "gray40") +
-  annotate(geom = "text", x = as.Date("2021-01-25"), y = taco[, max(r_est, na.rm = TRUE)] * 1.05,
-           label = "January 27", size = 3, color = "gray40", hjust = 1, family = "Lato") +
-  geom_vline(xintercept = as.Date("2021-04-19"), linetype = 2, color = "gray40") +
-  annotate(geom = "text", x = as.Date("2021-04-21"), y = taco[, max(r_est, na.rm = TRUE)] * 1.05,
-           label = "April 19", size = 3, color = "gray40", hjust = 0, family = "Lato") +
+  geom_vline(xintercept = as.Date("2021-01-27"), linetype = 2, size = 1, color = "gray40") +
+  annotate(geom = "text", x = as.Date("2021-01-24"), y = taco[, max(r_est, na.rm = TRUE)] * 1.05,
+           label = "January 27", size = 4, color = "gray40", hjust = 1, family = "Lato") +
+  geom_vline(xintercept = as.Date("2021-04-19"), linetype = 2, size = 1, color = "gray40") +
+  annotate(geom = "text", x = as.Date("2021-04-22"), y = taco[, max(r_est, na.rm = TRUE)] * 1.05,
+           label = "April 19", size = 4, color = "gray40", hjust = 0, family = "Lato") +
   
   geom_hline(yintercept = 1, linetype = 2, color = "#FF9933") +
   geom_ribbon(aes(ymin = r_lower, ymax = r_upper), fill = "#138808", alpha = 0.5) +
