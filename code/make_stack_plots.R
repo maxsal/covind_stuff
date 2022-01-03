@@ -1,7 +1,6 @@
 set_seed <- 46342
 set.seed(set_seed)
 
-start_date <- "2020-03-24"
 max_date   <- Sys.Date() - 1
 
 d <- covid19india::get_all_data()[date <= max_date]
@@ -14,7 +13,7 @@ for (i in seq_along(f)) {
   
   cli::cli_alert(glue("{f[i]} [{i}/{length(f)} ({round(i*100/length(f))}%)]..."))
   
-  tmp <- d[place == f[i] & date >= start_date & date <= max_date & daily_cases > 0 & daily_recovered > 0 & daily_deaths > 0][, .(date, daily_cases, daily_deaths, daily_recovered)]
+  tmp <- d[place == f[i] & date >= (max_date - 365) & date <= max_date & daily_cases > 0 & daily_recovered > 0 & daily_deaths > 0][, .(date, daily_cases, daily_deaths, daily_recovered)]
   
   tmp <- data.table::melt(tmp, id.vars = "date", variable.name = "Trend", value.name = "count")[, Trend := data.table::fcase(
     Trend == "daily_cases", "New cases",
@@ -31,7 +30,7 @@ for (i in seq_along(f)) {
     guides(fill = guide_legend(title = "", override.aes = list(size = 1))) +
     labs(
       title    = glue("Daily number of COVID-19 cases, fatalities, and recovered in {f[i]}"),
-      subtitle = glue("as of {format(max(d$date), '%B %e, %Y')}"),
+      subtitle = glue("from {format(tmp[, min(date)], '%B %e, %Y')} to {format(tmp[, max(date)], '%B %e, %Y')}"),
       x        = "Date",
       y        = "Count",
       caption  = "**Source:** covid19data.org<br>**\uA9 COV-IND-19 Study Group**"
@@ -39,7 +38,7 @@ for (i in seq_along(f)) {
     theme_classic() +
     theme(
       legend.position = "top",
-      text            = element_text(family = "Lato"),
+      text            = element_text(family = "Helvetica Neue"),
       legend.title    = element_text(size = 10),
       legend.text     = element_text(size = 8),
       legend.key.size = unit(0.3, "cm"),
@@ -48,7 +47,7 @@ for (i in seq_along(f)) {
       plot.caption    = element_markdown(hjust = 0)
     )
   
-  tvr_plt <- d[date >= "2020-03-24" & place == f[i]] |>
+  tvr_plt <- d[date >= (max_date - 365) & place == f[i]] |>
     ggplot(aes(x = date, y = r_est)) +
     geom_hline(yintercept = 1, linetype = 2, color = "#FF9933") +
     geom_ribbon(aes(ymin = r_lower, ymax = r_upper), fill = "#138808", alpha = 0.5) +
@@ -57,7 +56,7 @@ for (i in seq_along(f)) {
     scale_x_date(date_labels = "%b %e") +
     labs(
       title    = glue("Time-varying R estimate in {f[i]}"),
-      subtitle = glue("from {format(as.Date(start_date), '%B %e, %Y')} to {format(max(d$date), '%B %e, %Y')}"),
+      subtitle = glue("from {format(tmp[, min(date)], '%B %e, %Y')} to {format(tmp[, max(date)], '%B %e, %Y')}"),
       x        = "Date",
       y        =  "R(t)",
       caption  = glue("**Sources:** covid19india.org; covind19.org<br>",
@@ -65,7 +64,7 @@ for (i in seq_along(f)) {
     ) +
     theme_classic() +
     theme(
-      text          = element_text(family = "Lato"),
+      text          = element_text(family = "Helvetica Neue"),
       plot.title    = element_text(hjust = 0, face = "bold"),
       plot.subtitle = element_text(hjust = 0, color = "gray40"),
       plot.caption  = element_markdown(hjust = 0)

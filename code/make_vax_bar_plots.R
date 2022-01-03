@@ -1,9 +1,3 @@
-library(data.table)
-library(covid19india)
-library(ggplot2)
-library(glue)
-library(scales)
-
 vax_dat <- merge.data.table(
   get_state_vax(),
   covid19india::pop[, !c("population")][, .SD[1], by = "place"],
@@ -28,7 +22,7 @@ vax_bar_plot <- function(name) {
     ) +
     theme_classic() +
       theme(
-        text               = element_text(family = "Helvetica"),
+        text               = element_text(family = "Helvetica Neue"),
         plot.title         = element_text(face = "bold"),
         plot.subtitle      = element_text(hjust = 0, color = "gray40"),
         plot.caption       = element_text(hjust = 0, face = "bold"),

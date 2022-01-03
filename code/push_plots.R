@@ -1,7 +1,8 @@
 ally::libri(
   tidyverse, janitor, glue, ggtext, extrafont, here, httr, patchwork,
-  EpiEstim, maxsal/covid19india, data.table 
+  EpiEstim, maxsal/covid19india, data.table, scales 
 )
+
 source(here("functions.R"))
 
 set_seed <- 46342
