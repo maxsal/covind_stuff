@@ -11,6 +11,8 @@ dbc <- daily_barplot_colors[!names(daily_barplot_colors) %in% "Cases"]
 options(warn = -1)
 for (i in seq_along(f)) {
   
+  if (grepl("\\*", f[i])) { next }
+  
   cli::cli_alert(glue("{f[i]} [{i}/{length(f)} ({round(i*100/length(f))}%)]..."))
   
   tmp <- d[place == f[i] & date >= (max_date - 365) & date <= max_date & daily_cases > 0 & daily_recovered > 0 & daily_deaths > 0][, .(date, daily_cases, daily_deaths, daily_recovered)]
@@ -74,8 +76,8 @@ for (i in seq_along(f)) {
     dir.create(path = here("stack_plots", glue("{max_date}")), recursive = T)
   }
   
-  png(filename = here("stack_plots", glue("{max_date}"), glue("{f[i]}_plot.png")),
-      width = 10, height = 8, units = "in", res = 320)
+  cairo_pdf(filename = here("stack_plots", glue("{max_date}"), glue("{f[i]}_plot.pdf")),
+      width = 10, height = 8)
     print(inc_plt / tvr_plt)
   dev.off()
   
