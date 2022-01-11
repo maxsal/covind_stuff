@@ -10,7 +10,7 @@ alpha_u_val <- 0.5
 f_val       <- 0.15  # false positivity rate
 plt         <- FALSE
 save_plt    <- FALSE
-production  <- TRUE
+production  <- FALSE
 
 # Set variables based on testing or production
 if (production == TRUE) {
@@ -36,7 +36,8 @@ N          <- covid19india::pop %>% filter(abbrev == state) %>% pull(population)
 # prepare ----------
 data_initial <- get_init(data)
 data         <- data[date >= min_date]
-mCFR         <- tail(cumsum(data$Deceased) / cumsum(data$Deceased + data$Recovered), 1)
+mCFR         <- data[(.N-13):.N][, lapply(.SD, sum), .SDcols = c("Recovered", "Deceased")][, mCFR := Deceased / (Deceased + Recovered)][, mCFR][]
+# mCFR         <- tail(cumsum(data$Deceased) / cumsum(data$Deceased + data$Recovered), 1)
 phases       <- get_phase(start_date = min_date, end_date = max_date)
 
 # model ----------
@@ -202,7 +203,7 @@ death_dat <- pred_clean[section %in% c("death_unreported", "death_daily_reported
 death_bar_plot <- death_dat[
   section == "death_unreported", reported := "Unreported"][
     section == "death_daily_reported", reported := "Reported"][
-      , reported := factor(reported, c("Unreported", "Reported"))][] |>
+      , reported := factor(reported, c("Unreported", "Reported"))][reported != "Unreported"] |>
   ggplot(aes(x = date, y = daily, fill = reported)) +
   geom_bar(stat = "identity") +
   scale_fill_brewer(palette = "Set2") +
