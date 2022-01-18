@@ -1,3 +1,5 @@
+# install.packages("remotes")
+# remotes::install_gitlab("maxsal/ally")
 ally::libri(tidyverse, janitor, arm, covid19india, glue, data.table, cli)
 
 f <- list.files("seir/scripts/")
@@ -10,7 +12,7 @@ alpha_u_val <- 0.5
 f_val       <- 0.15  # false positivity rate
 plt         <- FALSE
 save_plt    <- FALSE
-production  <- TRUE
+production  <- FALSE
 
 # Set variables based on testing or production
 if (production == TRUE) {
@@ -18,15 +20,15 @@ if (production == TRUE) {
   burn_in   <- 3e5
   opt_num   <- 200
 } else {
-  n_iter    <- 1e3 #default 1e5
-  burn_in   <- 1e2 #default 1e5
-  opt_num   <- 20  #default 200
+  n_iter    <- 5e4 #default 1e5
+  burn_in   <- 5e4 #default 1e5
+  opt_num   <- 100  #default 200
 }
 
 # auto-specs -----------
 state_name <- covid19india::pop[abbrev == state, place]
 
-data <- get_nat_counts()[, .(date, Confirmed = daily_cases, Recovered = daily_recovered, Deceased = daily_deaths)][]
+data <- get_nat_counts()[, .(date, Confirmed = daily_cases, Recovered = daily_recovered, Deceased = daily_deaths)][date <= as.Date("2022-01-11")]
 
 max_date   <- data[, max(date)]
 min_date   <- as.Date(max_date - 99)
@@ -36,7 +38,8 @@ N          <- covid19india::pop %>% filter(abbrev == state) %>% pull(population)
 # prepare ----------
 data_initial <- get_init(data)
 data         <- data[date >= min_date]
-mCFR         <- tail(cumsum(data$Deceased) / cumsum(data$Deceased + data$Recovered), 1)
+mCFR         <- data[(.N-13):.N][, lapply(.SD, sum), .SDcols = c("Recovered", "Deceased")][, mCFR := Deceased / (Deceased + Recovered)][, mCFR][]
+# mCFR         <- tail(cumsum(data$Deceased) / cumsum(data$Deceased + data$Recovered), 1)
 phases       <- get_phase(start_date = min_date, end_date = max_date)
 
 # model ----------
@@ -46,6 +49,7 @@ result <- model_predictR(
   data_init       = data_initial,
   T_predict       = t_pred,
   De              = 3,
+  Dr              = 14, # 8, 10, 14
   pi              = rep(1, t_pred),
   niter           = n_iter,
   BurnIn          = burn_in,
@@ -202,7 +206,7 @@ death_dat <- pred_clean[section %in% c("death_unreported", "death_daily_reported
 death_bar_plot <- death_dat[
   section == "death_unreported", reported := "Unreported"][
     section == "death_daily_reported", reported := "Reported"][
-      , reported := factor(reported, c("Unreported", "Reported"))][] |>
+      , reported := factor(reported, c("Unreported", "Reported"))] |>
   ggplot(aes(x = date, y = daily, fill = reported)) +
   geom_bar(stat = "identity") +
   scale_fill_brewer(palette = "Set2") +
