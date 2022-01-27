@@ -19,3 +19,4 @@ tabs <- covid19india::get_metrics_tables()
 tabs$full
 tabs$point_in_time
 tabs$cumulative
+
