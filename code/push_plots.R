@@ -20,3 +20,4 @@ tabs$full
 tabs$point_in_time
 tabs$cumulative
 
+source("code/clean_repo.R")
