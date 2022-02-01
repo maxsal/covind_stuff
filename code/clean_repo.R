@@ -1,5 +1,5 @@
 
-dirs <- c("metrics_table/", "stack_plots/", "vax_plots/")
+dirs <- c("metrics_table/", "stack_plots/", "vax_plots/", "bar_plots/")
 
 for (i in seq_along(dirs)) {
   
