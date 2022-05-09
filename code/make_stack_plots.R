@@ -15,7 +15,9 @@ for (i in seq_along(f)) {
   
   cli::cli_alert(glue("{f[i]} [{i}/{length(f)} ({round(i*100/length(f))}%)]..."))
   
-  tmp <- d[place == f[i] & date >= (max_date - 365) & date <= max_date & daily_cases > 0 & daily_recovered > 0 & daily_deaths > 0][, .(date, daily_cases, daily_deaths, daily_recovered)]
+  tmp <- d[place == f[i] & date >= (max_date - 365) & date <= max_date & daily_cases > 0 & daily_recovered > 0 & daily_deaths > 0][
+    , .(date, daily_cases, daily_deaths, daily_recovered)
+    ]
   
   tmp <- data.table::melt(tmp, id.vars = "date", variable.name = "Trend", value.name = "count")[, Trend := data.table::fcase(
     Trend == "daily_cases", "New cases",
@@ -24,7 +26,12 @@ for (i in seq_along(f)) {
   )]
   
   inc_plt <- tmp |>
-    ggplot(aes(x = date, y = count, group = factor(Trend, levels = c("Recovered", "Fatalities", "New cases")), fill = factor(Trend, levels = c("Recovered", "Fatalities", "New cases")))) +
+    ggplot(aes(
+      x = date,
+      y = count,
+      group = factor(Trend, levels = c("Recovered", "Fatalities", "New cases")),
+      fill = factor(Trend, levels = c("Recovered", "Fatalities", "New cases"))
+      )) +
     geom_bar(stat = "identity") +
     scale_fill_manual(values = dbc) +
     scale_y_continuous(labels = scales::comma) +
@@ -40,7 +47,7 @@ for (i in seq_along(f)) {
     theme_classic() +
     theme(
       legend.position = "top",
-      text            = element_text(family = "Helvetica Neue"),
+      text            = element_text(family = "Lato"),
       legend.title    = element_text(size = 10),
       legend.text     = element_text(size = 8),
       legend.key.size = unit(0.3, "cm"),
@@ -66,7 +73,7 @@ for (i in seq_along(f)) {
     ) +
     theme_classic() +
     theme(
-      text          = element_text(family = "Helvetica Neue"),
+      text          = element_text(family = "Lato"),
       plot.title    = element_text(hjust = 0, face = "bold"),
       plot.subtitle = element_text(hjust = 0, color = "gray40"),
       plot.caption  = element_markdown(hjust = 0)
@@ -82,5 +89,4 @@ for (i in seq_along(f)) {
   dev.off()
   
 }
-
 options(warn = 1)

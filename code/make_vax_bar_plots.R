@@ -42,6 +42,8 @@ if (!dir.exists(here("vax_plots", max_date))) {
 
 for (i in seq_along(state_names)) {
   
+  cli::cli_alert(glue("{state_names[i]} [{i}/{length(state_names)} ({round(i*100/length(state_names))}%)]..."))
+  
   tmp_plot <- vax_bar_plot(name = state_names[i])
   
   ggsave(filename = here("vax_plots", max_date, glue("{make_clean_names(state_names[i])}_vax_plot.pdf")),
