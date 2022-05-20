@@ -1,12 +1,7 @@
-set_seed <- 46342
-set.seed(set_seed)
-
 max_date   <- Sys.Date() - 1
-
-d <- covid19india::get_all_data()[date <= max_date]
-f <- unique(d[, place])
-
-dbc <- daily_barplot_colors[!names(daily_barplot_colors) %in% "Cases"]
+d          <- covid19india::get_all_data()[date <= max_date]
+f          <- unique(d[, place])
+dbc        <- daily_barplot_colors[!names(daily_barplot_colors) %in% "Cases"]
 
 options(warn = -1)
 for (i in seq_along(f)) {
