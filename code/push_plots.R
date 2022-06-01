@@ -8,9 +8,7 @@ source("functions.R")
 set_seed <- 46342
 set.seed(set_seed)
 
-source("code/make_stack_plots.R")
-source("code/make_bar_plots.R")
-source("code/make_vax_bar_plots.R")
+source("code/make_plots.R")
 
 tabs <- covid19india::get_metrics_tables()
 
