@@ -18,6 +18,7 @@ tabs$cumulative
 
 source("code/clean_repo.R")
 
-git2r::add(rep = ".", path = NYLL, force = FALSE)
+git2r::add(repo = ".", path = ".", force = FALSE)
 git2r::commit(repo = ".", message = "push plots")
-git2r::push(name = "origin")
+git2r::push(name = "origin", refspec = "refs/heads/main")
+git2r::push(name = "gitlab", refspec = "refs/heads/main")
