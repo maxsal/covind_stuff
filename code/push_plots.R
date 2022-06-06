@@ -1,6 +1,6 @@
 ally::libri(
   tidyverse, janitor, glue, ggtext, extrafont, here, httr, patchwork,
-  EpiEstim, maxsal/covid19india, data.table, scales 
+  EpiEstim, maxsal/covid19india, data.table, scales, git2r 
 )
 
 source("functions.R")
@@ -17,3 +17,7 @@ tabs$point_in_time
 tabs$cumulative
 
 source("code/clean_repo.R")
+
+git2r::add(rep = ".", path = NYLL, force = FALSE)
+git2r::commit(repo = ".", message = "push plots")
+git2r::push(name = "origin")
