@@ -12,9 +12,7 @@ source("code/make_plots.R")
 
 tabs <- covid19india::get_metrics_tables()
 
-tabs$full
-tabs$point_in_time
-tabs$cumulative
+quick_save(x = tabs, date = vax_max_date)
 
 source("code/clean_repo.R")
 

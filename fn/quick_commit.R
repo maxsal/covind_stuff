@@ -1,4 +1,4 @@
-quick_commit <- function() {
+quick_commit <- function(mes = "push plots") {
   git2r::add(repo = ".", path = ".", force = FALSE)
   git2r::commit(repo = ".", message = "push plots")
   git2r::push(name = "origin", refspec = "refs/heads/main")
