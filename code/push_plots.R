@@ -1,6 +1,6 @@
 ally::libri(
   tidyverse, janitor, glue, ggtext, extrafont, here, httr, patchwork,
-  EpiEstim, maxsal/covid19india, data.table, scales, git2r 
+  EpiEstim, maxsal/covid19india, data.table, scales, git2r, gt 
 )
 
 source("functions.R")
