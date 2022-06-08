@@ -1,6 +1,6 @@
 ally::libri(
   tidyverse, janitor, glue, ggtext, extrafont, here, httr, patchwork,
-  EpiEstim, maxsal/covid19india, data.table, scales, git2r, gt 
+  EpiEstim, maxsal/covid19india, data.table, scales, git2r, gt, rprojroot 
 )
 
 source("functions.R")
@@ -17,3 +17,4 @@ quick_save(x = tabs, date = vax_max_date)
 source("code/clean_repo.R")
 
 quick_commit()
+
