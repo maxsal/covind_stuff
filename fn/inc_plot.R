@@ -18,6 +18,7 @@ inc_plot <- function(tmp, state_name) {
       y        = "Count",
       caption  = "**Source:** covid19data.org<br>**\uA9 COV-IND-19 Study Group**"
     ) +
+    # theme_minimal_grid(font_family = "Myriad Pro")
     theme_classic() +
     theme(
       legend.position = "top",
