@@ -12,8 +12,8 @@ walk(fns, ~source(paste0("fn/", .x)))
 
 # data -----------
 cli::cli_alert_info("prepping data")
-datas <- map(f, prep_data) |>
-  map(melt_data)
+datas <- purrr::map(f, prep_data) |>
+  purrr::map(melt_data)
 vax_data <- get_clean_vax_data()[place %in% f]
 
 vax_max_date <- vax_data[, max(date)]
