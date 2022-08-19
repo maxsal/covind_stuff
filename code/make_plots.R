@@ -1,5 +1,6 @@
 max_date   <- Sys.Date() - 1
-d          <- covid19india::get_all_data()[date <= max_date]
+d <- covid19bharat_ts()[date <= max_date]
+# d          <- covid19india::get_all_data()[date <= max_date]
 f          <- unique(d[, place])
 f          <- f[!grepl("\\*", f)]
 d          <- d[place %in% f]
@@ -14,9 +15,9 @@ walk(fns, ~source(paste0("fn/", .x)))
 cli::cli_alert_info("prepping data")
 datas <- purrr::map(f, prep_data) |>
   purrr::map(melt_data)
-vax_data <- get_clean_vax_data()[place %in% f]
+# vax_data <- get_clean_vax_data()[place %in% f]
 
-vax_max_date <- vax_data[, max(date)]
+# vax_max_date <- vax_data[, max(date)]
 
 # check directories ----------
 cli::cli_alert_info("checking directories")
@@ -28,8 +29,8 @@ if (!dir.exists(glue("stack_plots/{max_date}"))) {
   dir.create(path = glue("stack_plots/{max_date}"), recursive = T)
 }
 
-if (!dir.exists(glue("vax_plots/{vax_max_date}"))) {
-  dir.create(glue("vax_plots/{vax_max_date}"))
+if (!dir.exists(glue("vax_plots/{max_date}"))) {
+  dir.create(glue("vax_plots/{max_date}"))
 }
 
 # plots ----------
@@ -52,7 +53,8 @@ stacked_plots |>
   walk2(f, save_stack_plot)
 
 cli::cli_alert_info("vax_plots")
-vax_plots <- map(f, ~vax_bar_plot(data = vax_data, state_name = .x))
+
+vax_plots <- map(f, ~vax_bar_plot(data = d, state_name = .x))
 vax_plots |>
   walk2(f, save_vax_plot)
 
