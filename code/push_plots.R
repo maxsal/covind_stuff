@@ -4,7 +4,7 @@ ally::libri(
 )
 
 source("https://gitlab.com/-/snippets/2391974/raw/main/micro_covid19india.R")
-# source("functions.R")
+source("functions.R")
 
 set_seed <- 46342
 set.seed(set_seed)
@@ -13,7 +13,7 @@ source("code/make_plots.R")
 
 tabs <- get_metrics_tables()
 
-quick_save(x = tabs, date = vax_max_date)
+quick_save(x = tabs, date = max_date)
 
 source("code/clean_repo.R")
 
