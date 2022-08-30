@@ -13,7 +13,8 @@ source("code/make_plots.R")
 
 tabs <- get_metrics_tables()
 
-quick_save(x = tabs, date = max_date)
+# NEED TO SAVE AS PDF THROUGH RSTUDIO VIEWER
+# quick_save(x = tabs, date = max_date)
 
 source("code/clean_repo.R")
 
